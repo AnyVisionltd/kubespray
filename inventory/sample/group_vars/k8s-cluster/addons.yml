@@ -8,11 +8,11 @@ helm_enabled: true
 # Registry deployment
 registry_enabled: true
 # registry_namespace: kube-system
-# registry_storage_class: ""
-# registry_disk_size: "10Gi"
+registry_storage_class: "local-storage"
+registry_disk_size: "150Gi"
 
 # Metrics Server deployment
-metrics_server_enabled: true
+metrics_server_enabled: false
 # metrics_server_kubelet_insecure_tls: true
 # metrics_server_metric_resolution: 60s
 # metrics_server_kubelet_preferred_address_types: "InternalIP"

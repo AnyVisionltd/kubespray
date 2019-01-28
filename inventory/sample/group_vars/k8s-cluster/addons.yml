@@ -8,7 +8,7 @@ helm_enabled: true
 # Registry deployment
 registry_enabled: true
 # registry_namespace: kube-system
-registry_storage_class: "local-storage"
+registry_storage_class: "hostpath"
 registry_disk_size: "150Gi"
 
 # Metrics Server deployment

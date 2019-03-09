@@ -1,10 +1,10 @@
 ---
 # Log-level
 cilium_debug: false
-cilium_disable_ipv4: false
 
-# Etcd SSL dirs
-cilium_cert_dir: /etc/cilium/certs
+# IP configuration
+cilium_enable_ipv4: true
+cilium_enable_ipv6: false
 
 # Cilium Network Policy directory
 cilium_policy_dir: /etc/kubernetes/policy
@@ -17,3 +17,7 @@ cilium_cpu_requests: 100m
 
 # Optional features
 cilium_enable_prometheus: false
+
+## Clustering
+cilium_cluster_name: default
+cilium_cluster_id: 1

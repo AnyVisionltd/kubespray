@@ -23,18 +23,21 @@ while [[ $# -gt 0 ]]; do
         shift
         repository_address=${1}
         shift
+        continue
         ;;
         -a|--airgap)
         shift
-        #extra_vars='--extra-vars="@vars/airgap_download.yml"'
         airgap="true"
+        continue
         ;;
         -m|--master-ip)
         shift
         master_ip=${1}
         shift
+        continue
         ;;
     esac
+    break
 done
 
 # add aptly repo to sources.list
@@ -59,7 +62,6 @@ sudo ansible-playbook -vvvv -i inventory/sample/hosts.ini \
   -e airgap=$airgap \
   -e master_ip=$master_ip \
   -e repository_address=$repository_address \
-  cluster.yml \
-  #$extra_vars
+  cluster.yml "$@"
 
 echo 'Done!'

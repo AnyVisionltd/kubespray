@@ -14,7 +14,9 @@
 
   - name: ensure nvidia-docker2 release key is registered (apt)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-    when: (ansible_os_family == 'Debian') and (airgap != true)
+    when: 
+      - ansible_os_family == 'Debian'
+      - airgap is undefined and airgap == false
 
   - name: Get the distribution name (id)
     shell: . /etc/os-release; echo $ID
@@ -30,20 +32,28 @@
 
   - name: add the nvidia-docker2 repo (Ubuntu)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/{{ distribution_id.stdout }}{{ ansible_distribution_version }}/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-    when: (ansible_os_family == 'Debian') and (airgap != true)
+    when: 
+      - ansible_os_family == 'Debian'
+      - airgap is undefined and airgap == false
 
   - name: add the nvidia-docker2 repo (Debian)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/{{ distribution_id.stdout }}{{ distribution_major.stdout }}/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-    when: (ansible_os_family == 'Debian') and (airgap != true)
+    when:
+      - ansible_os_family == 'Debian'
+      - airgap is undefined and airgap == false
 
   - name: add the nvidia-docker2 repo (centos/rhel)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/{{ distribution_id.stdout }}{{ distribution_major.stdout }}/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
-    when: (ansible_os_family == 'RedHat' and (distribution_minor.stdout|int <= 5)) and (airgap != true)
+    when: 
+      - (ansible_os_family == 'RedHat' and (distribution_minor.stdout|int <= 5))
+      - airgap is undefined and airgap == false
 
   ## Hack until nvidia-docker repo will support RHEL 7.6+
   - name: add the nvidia-docker2 repo (centos/rhel)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/{{ distribution_id.stdout }}7.5/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
-    when: (ansible_os_family == 'RedHat' and (distribution_minor.stdout|int >= 6)) and (airgap != true)
+    when: 
+      - (ansible_os_family == 'RedHat' and (distribution_minor.stdout|int >= 6))
+      - airgap is undefined and airgap == false
 
 #  - name: "Install nvidia-docker2 (apt)"
 #    apt:
@@ -55,7 +65,7 @@
 
   - name: "Install nvidia-docker2 (apt)"
     apt:
-      pkg: nvidia-docker2
+      pkg: "{{ debian_nvidia_docker2 }}"
       state: present
       install_recommends: no
       update_cache: yes
@@ -64,16 +74,15 @@
 
   - name: "Install nvidia-docker2 (yum)"
     yum:
-      name:
+      name: "{{ rhel_nvidia_docker2 }}"
       state: present
       update_cache: yes
     when: ansible_os_family == 'RedHat'
-    with_items: "{{rhel_nvidia_docker2}}"
 
-  - name: "Install nvidia-docker2 (yum) by shell"
-    shell: yum install "{{item}}" -y
-    when: ansible_os_family == 'RedHat'
-    with_items: "{{rhel_nvidia_docker2}}"
+#  - name: "Install nvidia-docker2 (yum) by shell"
+#    shell: yum install "{{item}}" -y
+#    when: ansible_os_family == 'RedHat'
+#    with_items: "{{rhel_nvidia_docker2}}"
 
 #  - name: copy nvidia-docker daemon.json
 #    copy:

@@ -23,18 +23,18 @@
 - hosts: all
   gather_facts: false
   vars:
-    airgap: false
+    airgap: False
     repository_address: "http://{{ ansible_default_ipv4.address }}:8080/"
     master_ip: "{{ ansible_default_ipv4.address }}"
   pre_tasks:
-    - block:
-       - name: 'clear all original repositories'
-         raw: if [ -f /etc/apt/sources.list ]; then mv /etc/apt/sources.list /etc/apt/sources.list.original; fi
-       - name: 'install local repository'
-         raw: echo "deb [arch=amd64 trusted=yes allow-insecure=yes] {{repository_address}} bionic main" > /etc/apt/sources.list
-      when: airgap == true
-    - name: 'install python and pip'
-      raw: apt-get update && apt-get install -y --no-install-recommends python python-pip
+    - debug:
+        var: airgap
+    - name: 'clear all original repositories'
+      raw: if [ -f /etc/apt/sources.list ]; then cp -n /etc/apt/sources.list /etc/apt/sources.list.original; fi
+      when: airgap == True
+    - name: 'install local repository'
+      raw: echo "deb [arch=amd64 trusted=yes allow-insecure=yes] {{repository_address}} bionic main" > /etc/apt/sources.list
+      when: airgap == True
 
 - hosts: k8s-cluster:etcd:calico-rr
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
@@ -62,15 +62,15 @@
 
 - hosts: k8s-cluster:etcd:calico-rr
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
-  tasks:
+  pre_tasks:
     - name: include airgap installation variables
       include_vars: vars/airgap_download.yml
-      when: airgap == true
+      when: airgap == True
   roles:
     - { role: kubespray-defaults}
     - { role: kubernetes/preinstall, tags: preinstall }
     - { role: "container-engine", tags: "container-engine", when: deploy_container_engine|default(true) }
-    - { role: "load-kubernetes-images", tags: "load-kubernetes-images", when: "not skip_downloads", delegate_to: 127.0.0.1 }
+    - { role: "load-kubernetes-images", tags: "load-kubernetes-images", when: "airgap == True", delegate_to: 127.0.0.1 }
     - { role: download, tags: download, when: "not skip_downloads" }
   environment: "{{proxy_env}}"
 
@@ -147,4 +147,4 @@
   roles:
     - { role: kubespray-defaults}
     - { role: kubernetes-apps, tags: apps }
-    - { role: "load-bt-images", tags: "load-bt-images", when: "registry_enabled" }
+    - { role: "load-bt-images", tags: "load-bt-images", when: "registry_enabled and airgap == True" }

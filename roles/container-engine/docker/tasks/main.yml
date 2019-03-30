@@ -52,7 +52,7 @@
 - import_tasks: pre-upgrade.yml
 
 - debug:
-    msg: "airgap mode is {{ airgap }}"
+    var: airgap
 
 - name: ensure docker-ce repository public key is installed
   action: "{{ docker_repo_key_info.pkg_key }}"
@@ -67,7 +67,7 @@
   with_items: "{{ docker_repo_key_info.repo_keys }}"
   when:
     - not (ansible_os_family in ["CoreOS", "Container Linux by CoreOS", "RedHat", "Suse", "ClearLinux"] or is_atomic)
-    - airgap is undefined or airgap == false
+    - airgap is undefined or airgap == False
 
 - name: ensure docker-ce repository is enabled
   action: "{{ docker_repo_info.pkg_repo }}"
@@ -77,7 +77,7 @@
   with_items: "{{ docker_repo_info.repos }}"
   when:
     - not (ansible_os_family in ["CoreOS", "Container Linux by CoreOS", "RedHat", "Suse", "ClearLinux"] or is_atomic) and (docker_repo_info.repos|length > 0)
-    - airgap is undefined or airgap == false
+    - airgap is undefined or airgap == False
 
 - name: ensure docker-engine repository public key is installed
   action: "{{ dockerproject_repo_key_info.pkg_key }}"

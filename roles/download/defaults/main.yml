@@ -7,11 +7,11 @@ skip_downloads: false
 # if this is set to true will only download files once. Doesn't work
 # on Container Linux by CoreOS unless the download_localhost is true and localhost
 # is running another OS type. Default compress level is 1 (fastest).
-download_run_once: True
+download_run_once: False
 download_compress: 1
 
 # if this is set to true will download container
-download_container: False
+download_container: True
 
 # if this is set to true, uses the localhost for download_run_once mode
 # (requires docker and sudo to access docker). You may want this option for
@@ -63,15 +63,10 @@ kube_router_version: "v0.2.1"
 multus_version: "v3.1.autoconf"
 
 # Download URLs
-#kubeadm_download_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubeadm_version }}/bin/linux/{{ image_arch }}/kubeadm"
-#hyperkube_download_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kube_version }}/bin/linux/{{ image_arch }}/hyperkube"
-#etcd_download_url: "https://github.com/coreos/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz"
-#cni_download_url: "https://github.com/containernetworking/plugins/releases/download/{{ cni_version }}/cni-plugins-{{ image_arch }}-{{ cni_version }}.tgz"
-kubeadm_download_url: "http://{{ master_ip }}:8080/kubespray-binaries/kubeadm"
-hyperkube_download_url: "http://{{ master_ip }}:8080/kubespray-binaries/hyperkube"
-etcd_download_url: "http://{{ master_ip }}:8080/kubespray-binaries/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz"
-cni_download_url: "http://{{ master_ip }}:8080/kubespray-binaries/cni-plugins-{{ image_arch }}-{{ cni_version }}.tgz"
-
+kubeadm_download_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubeadm_version }}/bin/linux/{{ image_arch }}/kubeadm"
+hyperkube_download_url: "https://storage.googleapis.com/kubernetes-release/release/{{ kube_version }}/bin/linux/{{ image_arch }}/hyperkube"
+etcd_download_url: "https://github.com/coreos/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz"
+cni_download_url: "https://github.com/containernetworking/plugins/releases/download/{{ cni_version }}/cni-plugins-{{ image_arch }}-{{ cni_version }}.tgz"
 
 # Checksums
 hyperkube_checksums:
@@ -224,6 +219,8 @@ dnsmasq_image_tag: "{{ dnsmasq_version }}"
 kubedns_version: 1.14.13
 kubedns_image_repo: "gcr.io/google_containers/k8s-dns-kube-dns-{{ image_arch }}"
 kubedns_image_tag: "{{ kubedns_version }}"
+kube_proxy_image_repo: "gcr.io/google-containers/kube-proxy"
+kube_proxy_image_tag: "{{ kube_version }}"
 
 coredns_version: "1.2.6"
 coredns_image_repo: "coredns/coredns"
@@ -627,7 +624,7 @@ downloads:
     tag: "{{ registry_image_tag }}"
     sha256: "{{ registry_digest_checksum|default(None) }}"
     groups:
-      - kube-node
+      - kube-master
 
   registry_proxy:
     enabled: "{{ registry_enabled }}"
@@ -709,7 +706,16 @@ downloads:
     tag: "{{ dashboard_image_tag }}"
     sha256: "{{ dashboard_digest_checksum|default(None) }}"
     groups:
-      - kube-master
+      - kube-node
+
+  kube_proxy:
+    enabled: true
+    container: true
+    repo: "{{ kube_proxy_image_repo }}"
+    tag: "{{ kube_proxy_image_tag }}"
+    sha256: "{{ kube_proxy_digest_checksum|default(None) }}"
+    groups:
+      - k8s-cluster
 
 download_defaults:
   container: false

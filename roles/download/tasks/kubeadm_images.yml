@@ -22,3 +22,4 @@
 
 - name: container_download | download images for kubeadm config images
   command: "{{ bin_dir }}/kubeadm config images pull --config={{ kube_config_dir }}/kubeadm-images.yaml"
+  when: download_container == True

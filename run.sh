@@ -2,13 +2,13 @@
 
 #arguments
 function showhelp {
-   echo "$@ -r <repository_address> -m <master_ip>"
-   echo "Online example: ./run.sh --repository-address 'http://192.168.20.221:8080' --master-ip '192.168.20.221'"
-   echo "Airgap example: ./run.sh --airgap --repository-address 'http://192.168.20.221:8080' --master-ip '192.168.20.221'"
+   echo ""
+   echo "Online example: ./run.sh"
+   echo "Airgap example: ./run.sh --airgap --repository-address 'http://192.168.20.221:8080'"
 }
 
 ## Defaults
-airgap="false"
+airgap='{airgap: False}'
 
 ## Deploy
 POSITIONAL=()
@@ -27,13 +27,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         -a|--airgap)
         shift
-        airgap="true"
-        continue
-        ;;
-        -m|--master-ip)
-        shift
-        master_ip=${1}
-        shift
+        airgap='{airgap: True}'
         continue
         ;;
     esac
@@ -50,18 +44,17 @@ if [ $? != 0 ]; then
 fi
 
 # install ansible and pip
-dpkg-query -l python ansible python-pip > /dev/null 2>&1
+dpkg-query -l python ansible python-pip python-netaddr > /dev/null 2>&1
 if [ $? != 0 ]; then
   apt-get update
-  apt-get install -y --no-install-recommends python ansible python-pip
+  apt-get install -y --no-install-recommends python ansible python-pip python-netaddr
 fi
 
 # run ansible playbook
-sudo ansible-playbook -vvvv -i inventory/sample/hosts.ini \
+sudo ansible-playbook -vv -i inventory/sample/hosts.ini \
   --become --become-user=root \
-  -e airgap=$airgap \
-  -e master_ip=$master_ip \
-  -e repository_address=$repository_address \
+  -e "$airgap" \
+  -e repository_address="$repository_address" \
   cluster.yml "$@"
 
 echo 'Done!'

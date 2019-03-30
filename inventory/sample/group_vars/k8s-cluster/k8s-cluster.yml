@@ -98,7 +98,7 @@ kube_apiserver_insecure_port: 0 # (disabled)
 
 # Kube-proxy proxyMode configuration.
 # Can be ipvs, iptables
-kube_proxy_mode: iptables    # ziv
+kube_proxy_mode: iptables
 
 # A string slice of values which specify the addresses to use for NodePorts.
 # Values may be valid IP blocks (e.g. 1.2.3.0/24, 1.2.3.4/32).
@@ -157,7 +157,7 @@ helm_deployment_type: host
 k8s_image_pull_policy: IfNotPresent
 
 # audit log for kubernetes
-kubernetes_audit: false
+kubernetes_audit: true
 
 # dynamic kubelet configuration
 dynamic_kubelet_configuration: false

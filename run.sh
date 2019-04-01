@@ -34,22 +34,6 @@ while [[ $# -gt 0 ]]; do
     break
 done
 
-# add aptly repo to sources.list
-grep -i "$repository_address" /etc/apt/sources.list > /dev/null 2>&1
-if [ $? != 0 ]; then
-  mkdir -p /etc/apt-orig
-  rsync -a --ignore-existing /etc/apt/ /etc/apt-orig/
-  rm -rf /etc/apt/sources.list.d/*
-  echo "deb [arch=amd64 trusted=yes] $repository_address bionic main" > /etc/apt/sources.list
-fi
-
-# install ansible and pip
-dpkg-query -l python ansible python-pip python-netaddr > /dev/null 2>&1
-if [ $? != 0 ]; then
-  apt-get update
-  apt-get install -y --no-install-recommends python ansible python-pip python-netaddr
-fi
-
 # run ansible playbook
 sudo ansible-playbook -vv -i inventory/sample/hosts.ini \
   --become --become-user=root \
@@ -57,4 +41,6 @@ sudo ansible-playbook -vv -i inventory/sample/hosts.ini \
   -e repository_address="$repository_address" \
   cluster.yml "$@"
 
+echo -e "\n\n"
 echo 'Done!'
+echo -e "\n"

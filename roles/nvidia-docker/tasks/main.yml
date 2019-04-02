@@ -16,7 +16,7 @@
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
     when: 
       - ansible_os_family == 'Debian'
-      - airgap is undefined and airgap == False
+      - airgap is undefined or airgap == False
 
   - name: Get the distribution name (id)
     shell: . /etc/os-release; echo $ID
@@ -34,26 +34,26 @@
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/{{ distribution_id.stdout }}{{ ansible_distribution_version }}/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
     when: 
       - ansible_os_family == 'Debian'
-      - airgap is undefined and airgap == False
+      - airgap is undefined or airgap == False
 
   - name: add the nvidia-docker2 repo (Debian)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/{{ distribution_id.stdout }}{{ distribution_major.stdout }}/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
     when:
       - ansible_os_family == 'Debian'
-      - airgap is undefined and airgap == False
+      - airgap is undefined or airgap == False
 
   - name: add the nvidia-docker2 repo (centos/rhel)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/{{ distribution_id.stdout }}{{ distribution_major.stdout }}/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
     when: 
       - (ansible_os_family == 'RedHat' and (distribution_minor.stdout|int <= 5))
-      - airgap is undefined and airgap == False
+      - airgap is undefined or airgap == False
 
   ## Hack until nvidia-docker repo will support RHEL 7.6+
   - name: add the nvidia-docker2 repo (centos/rhel)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/{{ distribution_id.stdout }}7.5/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
     when: 
       - (ansible_os_family == 'RedHat' and (distribution_minor.stdout|int >= 6))
-      - airgap is undefined and airgap == False
+      - airgap is undefined or airgap == False
 
 #  - name: "Install nvidia-docker2 (apt)"
 #    apt:

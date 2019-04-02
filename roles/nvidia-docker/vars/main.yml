@@ -1,3 +1,3 @@
-debian_nvidia_docker2: 'nvidia-docker2=2.0.3+docker18.09.3-1'
+debian_nvidia_docker2: 'nvidia-docker2=2.0.3+docker18.09.4-1'
 
-rhel_nvidia_docker2: 'nvidia-docker2-2.0.3-1.docker18.09.3.ce.noarch'
+rhel_nvidia_docker2: 'nvidia-docker2-2.0.3-1.docker18.09.4.ce.noarch'

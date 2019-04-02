@@ -3,8 +3,16 @@
 #arguments
 function showhelp {
    echo ""
-   echo "Online example: ./run.sh"
-   echo "Airgap example: ./run.sh --airgap --repository-address 'http://192.168.20.221:8080'"
+   echo "Usage examples:"
+   echo "Online: $0 --inventory inventory/local/hosts.ini"
+   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository 'http://192.168.20.221:8080'"
+   echo ""
+   echo "OPTIONS:"
+   echo "  [-i|--inventory path] Ansible inventory file path."
+   echo "  [-r|--repository address] APT repository address (example: http://192.168.20.221:8080), must be combined with --airgap."
+   echo "  [-a|--airgap] Airgap installation mode, must be combined with --repository."
+   echo "  [-h|--help] Usage message."
+   echo ""
 }
 
 ## Defaults
@@ -20,9 +28,9 @@ while [[ $# -gt 0 ]]; do
         showhelp
         exit 0
         ;;
-        -r|--repository-address)
+        -r|--repository)
         shift
-        repository_address=${1}
+        repository_address="$1"
         shift
         continue
         ;;
@@ -32,12 +40,25 @@ while [[ $# -gt 0 ]]; do
         airgap_bool='{airgap: True}'
         continue
         ;;
+        -i|--inventory)
+        shift
+        inventory="$1"
+        shift
+        continue
+        ;;
     esac
     break
 done
 
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
+   echo "This script must be run as root"
+   exit 1
+fi
+
+if [ -z "$inventory" ]; then
+   echo ""
+   echo "ERROR: Inventory file is not specified."
+   showhelp
    exit 1
 fi
 
@@ -56,17 +77,14 @@ if [ $airgap == "true" ]; then
 else
   pip freeze | grep -i ansible > /dev/null 2>&1
   if [ $? != 0 ]; then
+    pip install setuptools
     pip install -r requirements.txt
   fi
 fi
 
 # run ansible playbook
-ansible-playbook -vv -i inventory/sample/hosts.ini \
+ansible-playbook -vv -i "$inventory" \
   --become --become-user=root \
   -e "$airgap_bool" \
   -e repository_address="$repository_address" \
   cluster.yml "$@"
-
-echo -e "\n\n"
-echo 'Done!'
-echo -e "\n"

@@ -8,7 +8,8 @@ function showhelp {
 }
 
 ## Defaults
-airgap='{airgap: False}'
+airgap="false"
+airgap_bool='{airgap: False}'
 
 ## Deploy
 POSITIONAL=()
@@ -27,17 +28,42 @@ while [[ $# -gt 0 ]]; do
         ;;
         -a|--airgap)
         shift
-        airgap='{airgap: True}'
+        airgap="true"
+        airgap_bool='{airgap: True}'
         continue
         ;;
     esac
     break
 done
 
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
+fi
+
+# install python and pip
+dpkg-query -l python python-pip python-netaddr > /dev/null 2>&1
+if [ $? != 0 ]; then
+  apt-get update
+  apt-get install -y --no-install-recommends python python-pip python-netaddr
+fi
+if [ $airgap == "true" ]; then
+  dpkg-query -l ansible > /dev/null 2>&1
+  if [ $? != 0 ]; then
+    apt-get update
+    apt-get install -y --no-install-recommends ansible
+  fi
+else
+  pip freeze | grep -i ansible > /dev/null 2>&1
+  if [ $? != 0 ]; then
+    pip install -r requirements.txt
+  fi
+fi
+
 # run ansible playbook
-sudo ansible-playbook -vv -i inventory/sample/hosts.ini \
+ansible-playbook -vv -i inventory/sample/hosts.ini \
   --become --become-user=root \
-  -e "$airgap" \
+  -e "$airgap_bool" \
   -e repository_address="$repository_address" \
   cluster.yml "$@"
 

@@ -93,20 +93,22 @@
       (((nvidia_device_lspci is defined) and (nvidia_device_lspci.stdout.find('NVIDIA') != -1)) or
       ((nvidia_device_lshw is defined) and (nvidia_device_lshw.stdout.find('NVIDIA') != -1)))
 
+
+  - name: copy nvidia-docker daemon.json
+      copy:
+        src: files/daemon.json
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: 0644
+
+  - name: restart dockerd
+    command: pkill -SIGHUP dockerd
+
+
 #  - name: "Install nvidia-docker2 (yum) by shell"
 #    shell: yum install "{{item}}" -y
 #    when: ansible_os_family == 'RedHat'
 #    with_items: "{{rhel_nvidia_docker2}}"
-
-#  - name: copy nvidia-docker daemon.json
-#    copy:
-#      src: files/daemon.json
-#      dest: /etc/docker/daemon.json
-#      owner: root
-#      group: root
-#      mode: 0644
-
-#  - name: restart dockerd
-#    command: pkill -SIGHUP dockerd
 
   when: nvidia_stat.stat.exists == true

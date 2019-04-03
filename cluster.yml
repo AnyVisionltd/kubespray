@@ -94,7 +94,7 @@
     #- { role: nvidia-prerequisite, become: yes, tags: ["nvidia-driver"] }
     - { role: nvidia-driver, become: yes, tags: ["nvidia-driver"] }
     - { role: nvidia-docker, become: yes, tags: ["nvidia-docker"] }
-    #- { role: docker-settings, become: yes , tags: ["docker-settings"] }
+    - { role: docker-settings, become: yes , tags: ["docker-settings"] }
   environment: "{{proxy_env}}"
 
 - hosts: kube-master

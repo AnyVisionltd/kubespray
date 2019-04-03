@@ -4,6 +4,16 @@
     path: /usr/bin/nvidia-smi
   register: nvidia_stat
 
+- name: check if nvidia gpu exist in lspci
+  shell: "lspci | grep ' VGA '"
+  register: nvidia_device_lspci
+  ignore_errors: true
+
+- name: check if nvidia gpu exist in lshw
+  shell: "lshw -C display"
+  register: nvidia_device_lshw
+  ignore_errors: true
+
 - block:
 
   #- name: ensure nvidia-docker2 release key is registered (apt)
@@ -11,6 +21,7 @@
   #    url: https://nvidia.github.io/nvidia-docker/gpgkey
   #    state: present
   #  when: ansible_os_family == 'Debian'
+
 
   - name: ensure nvidia-docker2 release key is registered (apt)
     shell: curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
@@ -79,11 +90,7 @@
       update_cache: yes
     when: ansible_os_family == 'RedHat'
 
-#  - name: "Install nvidia-docker2 (yum) by shell"
-#    shell: yum install "{{item}}" -y
-#    when: ansible_os_family == 'RedHat'
-#    with_items: "{{rhel_nvidia_docker2}}"
-
+#
 #  - name: copy nvidia-docker daemon.json
 #    copy:
 #      src: files/daemon.json
@@ -91,8 +98,15 @@
 #      owner: root
 #      group: root
 #      mode: 0644
-
+#
 #  - name: restart dockerd
 #    command: pkill -SIGHUP dockerd
 
-  when: nvidia_stat.stat.exists == true
+#  - name: "Install nvidia-docker2 (yum) by shell"
+#    shell: yum install "{{item}}" -y
+#    when: ansible_os_family == 'RedHat'
+#    with_items: "{{rhel_nvidia_docker2}}"
+
+  when: nvidia_stat.stat.exists == true and
+    (((nvidia_device_lspci is defined) and (nvidia_device_lspci.stdout.find('NVIDIA') != -1)) or
+    ((nvidia_device_lshw is defined) and (nvidia_device_lshw.stdout.find('NVIDIA') != -1)))

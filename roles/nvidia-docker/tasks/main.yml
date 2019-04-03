@@ -95,12 +95,12 @@
 
 
   - name: copy nvidia-docker daemon.json
-      copy:
-        src: files/daemon.json
-        dest: /etc/docker/daemon.json
-        owner: root
-        group: root
-        mode: 0644
+    copy:
+      src: files/daemon.json
+      dest: /etc/docker/daemon.json
+      owner: root
+      group: root
+      mode: 0644
 
   - name: restart dockerd
     command: pkill -SIGHUP dockerd

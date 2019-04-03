@@ -206,7 +206,7 @@ docker_iptables_enabled: "false"
 
 # Docker log options
 # Rotate container stderr/stdout logs at 50m and keep last 5
-docker_log_opts: "--log-opt max-size=50m --log-opt max-file=5"
+docker_log_opts: "--log-opt max-size=1g --log-opt max-file=5"
 
 ## An obvious use case is allowing insecure-registry access to self hosted registries.
 ## Can be ipaddress and domain_name.

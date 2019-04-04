@@ -20,7 +20,7 @@ docker_iptables_enabled: "true"
 
 # Docker log options
 # Rotate container stderr/stdout logs at 50m and keep last 5
-docker_log_opts: "--log-opt max-size=50m --log-opt max-file=5"
+docker_log_opts: "--log-opt max-size=1g --log-opt max-file=5"
 
 # define docker bin_dir
 docker_bin_dir: "/usr/bin"

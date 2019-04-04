@@ -44,8 +44,8 @@ docker_config_common:
       "path": "{{ runtimes_nvidia_path }}"
       "runtimeArgs": "{{ runtimes_nvidia_runtimeArgs }}"
 #  "log-driver": "{{ docker_config_log_driver }}"
-  "log-opts":
-    "max-size": "{{ docker_config_log_opts }}"
+#  "log-opts":
+#    "max-size": "{{ docker_config_log_opts }}"
 #  "graph": "{{ docker_config_graph }}"
 #  "max-concurrent-downloads": "{{ docker_config_max_concurrent_downloads }}"
 #  "max-concurrent-uploads": "{{ docker_config_max_concurrent_uploads }}"

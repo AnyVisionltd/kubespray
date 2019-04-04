@@ -48,7 +48,9 @@ spec:
           persistentVolumeClaim:
             claimName: registry-pvc
 {% else %}
-          emptyDir: {}
+          hostPath:
+            path: /storage/registry
+            type: DirectoryOrCreate
 {% endif %}
       nodeSelector:
-        app: registry
+        addon: "registry"

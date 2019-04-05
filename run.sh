@@ -77,7 +77,7 @@ if [ $airgap == "true" ]; then
 else
   pip freeze | grep -i ansible > /dev/null 2>&1
   if [ $? != 0 ]; then
-    pip install setuptools
+    pip install setuptools wheel
     pip install -r requirements.txt
   fi
 fi

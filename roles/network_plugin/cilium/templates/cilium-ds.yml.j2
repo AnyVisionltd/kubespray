@@ -81,7 +81,7 @@ spec:
           containerPort: 9090
           hostPort: 9090
           protocol: TCP
-{% endif %}          
+{% endif %}
         lifecycle:
           postStart:
             exec:
@@ -277,6 +277,8 @@ spec:
           mountPath: /host/opt/cni/bin
         - name: etc-cni-netd
           mountPath: /host/etc/cni/net.d
+        - name: cilium-certs
+          mountPath: {{ cilium_cert_dir }}
 {% if container_manager == 'crio' %}
         - name: crio-socket
           mountPath: /var/run/crio.sock
@@ -300,14 +302,14 @@ spec:
             add:
             - "NET_ADMIN"
           privileged: true
+        resources:
+          limits:
+            cpu: {{ cilium_cpu_limit }}
+            memory: {{ cilium_memory_limit }}
+          requests:
+            cpu: {{ cilium_cpu_requests }}
+            memory: {{ cilium_memory_requests }}
       hostNetwork: true
-      resources:
-        limits:
-          cpu: {{ cilium_cpu_limit }}
-          memory: {{ cilium_memory_limit }}
-        requests:
-          cpu: {{ cilium_cpu_requests }}
-          memory: {{ cilium_memory_requests }}
       dnsPolicy: ClusterFirstWithHostNet
       hostPID: false
       priorityClassName: system-node-critical
@@ -346,6 +348,11 @@ spec:
         hostPath:
           path: /opt/cni/bin
           type: DirectoryOrCreate
+        # Certificates
+      - name: cilium-certs
+        hostPath:
+          path: {{ cilium_cert_dir }}
+          type: DirectoryOrCreate
         # To install cilium cni configuration in the host
       - name: etc-cni-netd
         hostPath:
@@ -371,4 +378,3 @@ spec:
           defaultMode: 420
           optional: true
           secretName: cilium-clustermesh
-  

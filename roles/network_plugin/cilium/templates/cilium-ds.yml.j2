@@ -33,7 +33,7 @@ spec:
       - args:
         - --kvstore=etcd
         - --kvstore-opt=etcd.config=/var/lib/etcd-config/etcd.config
-        - --config-dir=/tmp/cilium/config-map
+        - --config=/tmp/cilium/config-map
         command:
         - cilium-agent
         env:
@@ -145,9 +145,6 @@ spec:
         - mountPath: /var/lib/etcd-secrets
           name: etcd-secrets
           readOnly: true
-        # - mountPath: /var/lib/etcd-secrets
-        #   name: etcd-secrets
-        #   readOnly: true
         - mountPath: /var/lib/cilium/clustermesh
           name: clustermesh-secrets
           readOnly: true
@@ -247,7 +244,7 @@ spec:
         name: sbin-modprobe
         # To mount the local etcd TLS certificates
       - hostPath:
-          path: {{ etcd_cert_dir }}
+          path: {{ cilium_cert_dir }}
           type: DirectoryOrCreate
         name: etcd-secrets
         # To read the etcd config stored in config maps

@@ -21,9 +21,9 @@
     state: hard
     force: yes
   with_items:
-    - {s: "ca.pem", d: "ca_cert.crt"}
-    - {s: "node-{{ inventory_hostname }}.pem", d: "cert.crt"}
-    - {s: "node-{{ inventory_hostname }}-key.pem", d: "key.pem"}
+    - {s: "ca.pem", d: "etcd-client-ca.crt"}
+    - {s: "node-{{ inventory_hostname }}.pem", d: "etcd-client.crt"}
+    - {s: "node-{{ inventory_hostname }}-key.pem", d: "etcd-client.key"}
 
 - name: Cilium | Create Cilium node manifests
   template:

@@ -89,6 +89,7 @@
 - hosts: k8s-cluster
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
+    - { role: kernel_params, become: yes, tags: ["kernel"] }
     - { role: kubespray-defaults}
     - { role: kubernetes/node, tags: node }
     #- { role: nvidia-prerequisite, become: yes, tags: ["nvidia-driver"] }

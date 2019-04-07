@@ -53,10 +53,10 @@
     value: 1000000000
     state: present
 
-- name: update sysctl vm.max_map_count
+- name: update sysctl vm.min_free_kbytes
   sysctl:
     name: vm.min_free_kbytes
-    value: "{{ (ansible_memtotal_mb / 100) }}"
+    value: "{{ ((ansible_memory_mb.real.total | int) * 1024 / 100 ) | round | int | abs }}"
     state: present
 
 - name: disable transparent_hugepage on run time
@@ -105,14 +105,14 @@
 
 
 
-- name: create systemd service to Disable Transparent Huge Pages (THP)
+- name: create systemd service ubuntu to Disable Transparent Huge Pages (THP)
   copy:
     src: "ubuntu-disable-thp.service"
     dest: "/etc/systemd/system/disable-thp.service"
     mode: 0664
   when: ansible_os_family == "Debian"
 
-- name: create systemd service to Disable Transparent Huge Pages (THP)
+- name: create systemd service redhat to Disable Transparent Huge Pages (THP)
   copy:
     src: "redhat-disable-thp.service"
     dest: "/etc/systemd/system/disable-thp.service"
@@ -124,7 +124,7 @@
   systemd:
     name: "disable-thp"
     enabled: "yes"
-    state: "started"
+    #state: "started"
     daemon_reload: yes
 
 - name: update sysctl vm.nr_hugepages
@@ -138,28 +138,28 @@
   pam_limits:
     domain: '1000'
     limit_type: hard
-    limit_item: nproc
+    limit_item: nofile
     value: '1000000'
 
 - name: update nofile hard 1000
   pam_limits:
     domain: '@1000'
     limit_type: hard
-    limit_item: nproc
+    limit_item: nofile
     value: '1000000'
 
 - name: update nofile hard 1000
   pam_limits:
     domain: '1000'
     limit_type: soft
-    limit_item: nproc
+    limit_item: nofile
     value: '1000000'
 
 - name: update nofile hard 1000
   pam_limits:
     domain: '@1000'
     limit_type: soft
-    limit_item: nproc
+    limit_item: nofile
     value: '1000000'    
 
 
@@ -192,11 +192,11 @@
     value: '128000'
     
 - name: Optimal On-Premise Columnstore Performance
-  shell: >
+  shell: |
     echo 0 > /sys/block/{{item}}/queue/add_random &&
     echo 0 > /sys/block/{{item}}/queue/add_random &&
     echo 1 > /sys/block/{{item}}/queue/rq_affinity &&
     echo none > /sys/block/{{item}}/queue/scheduler &&
-    echo 1023 > /sys/block/{{item}}/queue/nr_requests &&
-  with_items: "{{ hostvars[inventory_hostname]["ansible_devices"].keys() }}"
+    echo 1023 > /sys/block/{{item}}/queue/nr_requests
+  with_items: "{{ hostvars[inventory_hostname]['ansible_devices'].keys() }}"
   when: (hostvars[inventory_hostname]["ansible_devices"].keys() is defined) and (item | search("nvme"))

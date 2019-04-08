@@ -45,7 +45,7 @@
     value: 200000
     state: present
 
-# Memsql bestpractises
+# Memsql best practices
 
 - name: update sysctl vm.max_map_count
   sysctl:

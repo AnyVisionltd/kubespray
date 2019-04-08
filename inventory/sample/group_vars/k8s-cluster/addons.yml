@@ -74,6 +74,7 @@ ingress_nginx_configmap:
   map-hash-bucket-size: "128"
   ssl-protocols: "SSLv2"
 ingress_nginx_configmap_tcp_services:
+  1080: "default/apigateway:1080"   ## Dante proxy
   9443: "default/apigateway:9443"
   #8080: "default/apigateway:8080"
   #5443: "default/api:5443"
@@ -82,7 +83,7 @@ ingress_nginx_configmap_tcp_services:
   5671: "default/rabbitmq:5671"
   5672: "default/rabbitmq:5672"
   15671: "default/rabbitmq:15671"
-  15672: "default/rabbitmq:15672"
+  15672: "default/rabbitmq:15672"   ## RMQ UI - Can be removed
   7443: "default/push-notification:7443"
   1935: "default/rtstreamer:1935"
   27017: "default/mongodb:27017"

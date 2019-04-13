@@ -15,7 +15,7 @@
     - kubeadm_images is not defined
 
 - name: "Download items"
-  include_tasks: "{{ include_file }}"
+  include_tasks: "download_{% if download.container %}container{% else %}file{% endif %}.yml"
   vars:
     download: "{{ download_defaults | combine(item.value) }}"
   with_dict: "{{ downloads | combine(kubeadm_images) }}"

@@ -202,9 +202,6 @@ multus_image_tag: "{{ multus_version }}"
 nginx_image_repo: nginx
 nginx_image_tag: 1.15
 
-kube_proxy_image_repo: "gcr.io/google-containers/kube-proxy"
-kube_proxy_image_tag: "{{ kube_version }}"
-
 haproxy_image_repo: haproxy
 haproxy_image_tag: 1.9
 
@@ -659,15 +656,6 @@ downloads:
     sha256: "{{ dashboard_digest_checksum|default(None) }}"
     groups:
       - kube-node
-
-  kube_proxy:
-    enabled: true
-    container: true
-    repo: "{{ kube_proxy_image_repo }}"
-    tag: "{{ kube_proxy_image_tag }}"
-    sha256: "{{ kube_proxy_digest_checksum|default(None) }}"
-    groups:
-      - k8s-cluster
 
 download_defaults:
   container: false

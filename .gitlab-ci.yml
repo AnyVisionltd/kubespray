@@ -42,7 +42,7 @@ before_script:
   tags:
     - kubernetes
     - docker
-  image: quay.io/kubespray/kubespray:v2.8
+  image: quay.io/kubespray/kubespray:v2.9.0
 
 .docker_service: &docker_service
   services:
@@ -64,6 +64,16 @@ before_script:
   CI_PLATFORM: "do"
   SSH_USER: root
 
+.ovh_variables: &ovh_variables
+  OS_AUTH_URL: https://auth.cloud.ovh.net/v3
+  OS_PROJECT_ID: 8d3cd5d737d74227ace462dee0b903fe
+  OS_PROJECT_NAME: "9361447987648822"
+  OS_USER_DOMAIN_NAME: Default
+  OS_PROJECT_DOMAIN_ID: default
+  OS_USERNAME: 8XuhBMfkKVrk
+  OS_REGION_NAME: UK1
+  OS_INTERFACE: public
+  OS_IDENTITY_API_VERSION: "3"
 
 .testcases: &testcases
   <<: *job
@@ -223,12 +233,8 @@ before_script:
 
 .gce: &gce
   <<: *testcases
-  variables:
-    <<: *gce_variables
 
 .do: &do
-  variables:
-    <<: *do_variables
   <<: *testcases
 
 # Test matrix. Leave the comments for markup scripts.
@@ -330,11 +336,10 @@ before_script:
 
 gce_ubuntu18-flannel-aio:
   stage: deploy-part1
-  <<: *job
   <<: *gce
   variables:
-    <<: *ubuntu18_flannel_aio_variables
     <<: *gce_variables
+    <<: *ubuntu18_flannel_aio_variables
   when: on_success
   except: ['triggers']
   only: [/^pr-.*$/]
@@ -343,18 +348,16 @@ gce_ubuntu18-flannel-aio:
 
 gce_coreos-calico-aio:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
-    <<: *coreos_calico_aio_variables
     <<: *gce_variables
+    <<: *coreos_calico_aio_variables
   when: on_success
   except: ['triggers']
   only: [/^pr-.*$/]
 
 gce_centos7-flannel-addons:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -367,7 +370,6 @@ gce_centos7-flannel-addons:
 
 gce_centos-weave-kubeadm-sep:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -377,7 +379,6 @@ gce_centos-weave-kubeadm-sep:
 
 gce_ubuntu-weave-sep:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -387,7 +388,6 @@ gce_ubuntu-weave-sep:
 
 gce_coreos-calico-sep-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -397,7 +397,6 @@ gce_coreos-calico-sep-triggers:
 
 gce_ubuntu-canal-ha-triggers:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -407,7 +406,6 @@ gce_ubuntu-canal-ha-triggers:
 
 gce_centos7-flannel-addons-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -417,7 +415,6 @@ gce_centos7-flannel-addons-triggers:
 
 gce_ubuntu-weave-sep-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -428,7 +425,6 @@ gce_ubuntu-weave-sep-triggers:
 # More builds for PRs/merges (manual) and triggers (auto)
 do_ubuntu-canal-ha:
   stage: deploy-part2
-  <<: *job
   <<: *do
   variables:
     <<: *do_variables
@@ -438,7 +434,6 @@ do_ubuntu-canal-ha:
 
 gce_ubuntu-canal-ha:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -449,7 +444,6 @@ gce_ubuntu-canal-ha:
 
 gce_ubuntu-canal-kubeadm:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -460,7 +454,6 @@ gce_ubuntu-canal-kubeadm:
 
 gce_ubuntu-canal-kubeadm-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -470,7 +463,6 @@ gce_ubuntu-canal-kubeadm-triggers:
 
 gce_ubuntu-flannel-ha:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -480,7 +472,6 @@ gce_ubuntu-flannel-ha:
 
 gce_centos-weave-kubeadm-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -490,7 +481,6 @@ gce_centos-weave-kubeadm-triggers:
 
 gce_ubuntu-contiv-sep:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -501,7 +491,6 @@ gce_ubuntu-contiv-sep:
 
 gce_coreos-cilium:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -512,7 +501,6 @@ gce_coreos-cilium:
 
 gce_ubuntu-cilium-sep:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -523,7 +511,6 @@ gce_ubuntu-cilium-sep:
 
 gce_rhel7-weave:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -534,7 +521,6 @@ gce_rhel7-weave:
 
 gce_rhel7-weave-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -544,7 +530,6 @@ gce_rhel7-weave-triggers:
 
 gce_debian9-calico-upgrade:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -555,7 +540,6 @@ gce_debian9-calico-upgrade:
 
 gce_debian9-calico-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -565,7 +549,6 @@ gce_debian9-calico-triggers:
 
 gce_coreos-canal:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -576,7 +559,6 @@ gce_coreos-canal:
 
 gce_coreos-canal-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -586,7 +568,6 @@ gce_coreos-canal-triggers:
 
 gce_rhel7-canal-sep:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -597,7 +578,6 @@ gce_rhel7-canal-sep:
 
 gce_rhel7-canal-sep-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -607,7 +587,6 @@ gce_rhel7-canal-sep-triggers:
 
 gce_centos7-calico-ha:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -618,7 +597,6 @@ gce_centos7-calico-ha:
 
 gce_centos7-calico-ha-triggers:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -628,7 +606,6 @@ gce_centos7-calico-ha-triggers:
 
 gce_centos7-kube-router:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -639,7 +616,6 @@ gce_centos7-kube-router:
 
 gce_centos7-multus-calico:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -650,7 +626,6 @@ gce_centos7-multus-calico:
 
 gce_opensuse-canal:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -662,7 +637,6 @@ gce_opensuse-canal:
 # no triggers yet https://github.com/kubernetes-incubator/kargo/issues/613
 gce_coreos-alpha-weave-ha:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -673,7 +647,6 @@ gce_coreos-alpha-weave-ha:
 
 gce_coreos-kube-router:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -684,7 +657,6 @@ gce_coreos-kube-router:
 
 gce_ubuntu-rkt-sep:
   stage: deploy-part2
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -695,7 +667,6 @@ gce_ubuntu-rkt-sep:
 
 gce_ubuntu-kube-router-sep:
   stage: deploy-special
-  <<: *job
   <<: *gce
   variables:
     <<: *gce_variables
@@ -731,6 +702,14 @@ yamllint:
     - yamllint .
   except: ['triggers', 'master']
 
+ansible-lint:
+  <<: *job
+  stage: unit-tests
+  # lint every yml/yaml file that looks like it contains Ansible plays
+  script: |-
+    grep -Rl '^- hosts: \|^  hosts: \|^- name: ' --include \*.yml --include \*.yaml . | xargs ansible-lint -v
+  except: ['triggers', 'master']
+
 tox-inventory-builder:
   stage: unit-tests
   <<: *job
@@ -761,7 +740,6 @@ tox-inventory-builder:
     - echo "$PACKET_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
     - chmod 400 ~/.ssh/id_rsa
     - echo "$PACKET_PUBLIC_KEY" | base64 -d > ~/.ssh/id_rsa.pub
-    - export TF_VAR_public_key_path=""
   only: ['master', /^pr-.*$/]
 
 .terraform_validate: &terraform_validate
@@ -769,6 +747,7 @@ tox-inventory-builder:
   stage: unit-tests
   script:
     - terraform validate -var-file=cluster.tf ../../contrib/terraform/$PROVIDER
+    - terraform fmt -check -diff ../../contrib/terraform/$PROVIDER
 
 .terraform_apply: &terraform_apply
   <<: *terraform_install
@@ -776,7 +755,7 @@ tox-inventory-builder:
   when: manual
   script:
     - terraform apply -auto-approve ../../contrib/terraform/$PROVIDER
-    - ansible-playbook -i hosts ../../cluster.yml
+    - ansible-playbook -i hosts ../../cluster.yml --become
   after_script:
     # Cleanup regardless of exit code
     - cd inventory/$CLUSTER
@@ -796,7 +775,14 @@ tf-validate-packet:
     PROVIDER: packet
     CLUSTER: $CI_COMMIT_REF_NAME
 
-tf-apply-packet:
+tf-validate-aws:
+  <<: *terraform_validate
+  variables:
+    TF_VERSION: 0.11.11
+    PROVIDER: aws
+    CLUSTER: $CI_COMMIT_REF_NAME
+
+tf-packet-ubuntu16-default:
   <<: *terraform_apply
   variables:
     TF_VERSION: 0.11.11
@@ -808,3 +794,46 @@ tf-apply-packet:
     TF_VAR_plan_k8s_masters: t1.small.x86
     TF_VAR_plan_k8s_nodes: t1.small.x86
     TF_VAR_facility: "ewr1"
+    TF_VAR_public_key_path: ""
+    TF_VAR_operating_system: ubuntu_16_04
+
+tf-packet-ubuntu18-default:
+  <<: *terraform_apply
+  variables:
+    TF_VERSION: 0.11.11
+    PROVIDER: packet
+    CLUSTER: $CI_COMMIT_REF_NAME
+    TF_VAR_cluster_name: $CI_COMMIT_REF_NAME
+    TF_VAR_number_of_k8s_masters: "1"
+    TF_VAR_number_of_k8s_nodes: "1"
+    TF_VAR_plan_k8s_masters: t1.small.x86
+    TF_VAR_plan_k8s_nodes: t1.small.x86
+    TF_VAR_facility: "ams1"
+    TF_VAR_public_key_path: ""
+    TF_VAR_operating_system: ubuntu_18_04
+
+tf-apply-ovh:
+  <<: *terraform_apply
+  variables:
+    <<: *ovh_variables
+    TF_VERSION: 0.11.11
+    PROVIDER: openstack
+    CLUSTER: $CI_COMMIT_REF_NAME
+    ANSIBLE_TIMEOUT: "60"
+    TF_VAR_cluster_name: $CI_COMMIT_REF_NAME
+    TF_VAR_number_of_k8s_masters: "0"
+    TF_VAR_number_of_k8s_masters_no_floating_ip: "1"
+    TF_VAR_number_of_k8s_masters_no_floating_ip_no_etcd: "0"
+    TF_VAR_number_of_etcd: "0"
+    TF_VAR_number_of_k8s_nodes: "0"
+    TF_VAR_number_of_k8s_nodes_no_floating_ip: "1"
+    TF_VAR_number_of_gfs_nodes_no_floating_ip: "0"
+    TF_VAR_number_of_bastions: "0"
+    TF_VAR_number_of_k8s_masters_no_etcd: "0"
+    TF_VAR_use_neutron: "0"
+    TF_VAR_floatingip_pool: "Ext-Net"
+    TF_VAR_external_net: "6011fbc9-4cbf-46a4-8452-6890a340b60b"
+    TF_VAR_network_name: "Ext-Net"
+    TF_VAR_flavor_k8s_master: "defa64c3-bd46-43b4-858a-d93bbae0a229" #s1-8
+    TF_VAR_flavor_k8s_node: "defa64c3-bd46-43b4-858a-d93bbae0a229" #s1-8
+    TF_VAR_image: "Ubuntu 18.04"

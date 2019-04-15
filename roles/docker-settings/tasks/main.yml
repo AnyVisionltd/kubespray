@@ -38,11 +38,11 @@
   shell: pkill -HUP dockerd
   when: nvidia_docker_installed.stat.exists == false
 
-- name: "Add immutable flag"
-  file: 
-    path: /etc/docker/daemon.json
-    state: file
-    attributes: "i"
+#- name: "Add immutable flag"
+#  file: 
+#    path: /etc/docker/daemon.json
+#    state: file
+#    attributes: "i"
 
 - name: get docker default runtime
   shell: 'docker info | grep "Default Runtime" | cut -d ":" -f 2 | xargs'

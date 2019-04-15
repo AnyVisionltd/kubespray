@@ -76,7 +76,7 @@
 
   - name: "Install nvidia-docker2 (apt)"
     apt:
-      pkg: 
+      pkg: "{{item}}"
       state: present
       install_recommends: no
       update_cache: yes

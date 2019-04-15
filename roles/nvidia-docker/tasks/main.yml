@@ -76,11 +76,12 @@
 
   - name: "Install nvidia-docker2 (apt)"
     apt:
-      pkg: "{{ debian_nvidia_docker2 }}"
+      pkg: 
       state: present
       install_recommends: no
       update_cache: yes
       autoremove: yes
+    with_items: "{{ debian_nvidia_docker2 }}"
     when: ansible_os_family == 'Debian'
 
   - name: "Install nvidia-docker2 (yum)"

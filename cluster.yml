@@ -3,12 +3,11 @@
   gather_facts: false
   become: no
   tasks:
-    - name: "Check ansible version !=2.7.0"
+    - name: "Check ansible version >=2.7.6"
       assert:
-        msg: "Ansible V2.7.0 can't be used until: https://github.com/ansible/ansible/issues/46600 is fixed"
+        msg: "Ansible must be v2.7.6 or higher"
         that:
-          - ansible_version.string is version("2.7.0", "!=")
-          - ansible_version.string is version("2.6.0", ">=")
+          - ansible_version.string is version("2.7.6", ">=")
       tags:
         - check
   vars:
@@ -31,10 +30,10 @@
         var: airgap
     - name: 'clear all original repositories'
       raw: if [ -f /etc/apt/sources.list ]; then cp -n /etc/apt/sources.list /etc/apt/sources.list.original; fi
-      when: airgap == True
+      when: airgap is defined and airgap == True
     - name: 'install local repository'
       raw: echo "deb [arch=amd64 trusted=yes allow-insecure=yes] {{repository_address}} bionic main" > /etc/apt/sources.list
-      when: airgap == True
+      when: airgap is defined and airgap == True
 
 - hosts: k8s-cluster:etcd:calico-rr
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
@@ -65,12 +64,12 @@
   pre_tasks:
     - name: include airgap installation variables
       include_vars: vars/airgap_download.yml
-      when: airgap == True
+      when: airgap is defined and airgap == True
   roles:
     - { role: kubespray-defaults}
     - { role: kubernetes/preinstall, tags: preinstall }
     - { role: "container-engine", tags: "container-engine", when: deploy_container_engine|default(true) }
-    - { role: "load-kubernetes-images", tags: "load-kubernetes-images", when: "airgap == True", delegate_to: 127.0.0.1 }
+    - { role: "load-kubernetes-images", tags: "load-kubernetes-images", when: "airgap is defined and airgap == True", delegate_to: 127.0.0.1 }
     - { role: download, tags: download, when: "not skip_downloads" }
   environment: "{{proxy_env}}"
 
@@ -89,6 +88,7 @@
 - hosts: k8s-cluster
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
+    - { role: kernel_params, become: yes, tags: ["kernel"] }
     - { role: kubespray-defaults}
     - { role: kubernetes/node, tags: node }
     #- { role: nvidia-prerequisite, become: yes, tags: ["nvidia-driver"] }
@@ -140,5 +140,5 @@
     - { role: kubespray-defaults}
     - { role: kubernetes-apps, tags: apps }
     - { role: kubernetes/preinstall, when: "dns_mode != 'none' and resolvconf_mode == 'host_resolvconf'", tags: resolvconf, dns_late: true }
-    - { role: "load-bt-images", tags: "load-bt-images", when: "registry_enabled and airgap == True" }
+    - { role: "load-bt-images", tags: "load-bt-images", when: "registry_enabled and airgap is defined and airgap == True" }
   environment: "{{proxy_env}}"

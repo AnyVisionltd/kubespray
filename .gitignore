@@ -14,6 +14,7 @@ contrib/terraform/aws/credentials.tfvars
 **/*.sw[pon]
 *~
 vagrant/
+.vscode
 
 # Ansible inventory
 inventory/*

@@ -1,17 +1,6 @@
 ---
 - import_tasks: pre-upgrade.yml
 
-
-- name: Flannel | set flannel_interface_regexp when the kube-mster ip var is defined
-  set_fact:
-    flannel_interface_regexp: "{{ ip.split('.')[0]}}\\.{{ ip.split('.')[1]}}\\.\\d{1,3}\\.\\d{1,3}"
-  when:
-    - inventory_hostname in groups['kube-master']
-    - ip is defined
-    - flannel_interface_regexp is not defined
-
-
-
 - name: Flannel | Create Flannel manifests
   template:
     src: "{{item.file}}.j2"

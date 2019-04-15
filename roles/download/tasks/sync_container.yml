@@ -3,7 +3,6 @@
   include: set_docker_image_facts.yml
   delegate_to: "{{ download_delegate if download_run_once or omit }}"
   delegate_facts: no
-  run_once: "{{ download_run_once }}"
   when:
     - download.enabled
     - download.container
@@ -54,6 +53,7 @@
     - download.enabled
     - download.container
     - download_run_once
+    - pull_required|default(download_always_pull)
   tags:
     - facts
 
@@ -62,11 +62,12 @@
   delegate_to: "{{ download_delegate }}"
   delegate_facts: no
   register: saved
-  run_once: true
+  failed_when: saved.stderr != ""
   when:
     - download.enabled
     - download.container
     - download_run_once
+    - pull_required|default(download_always_pull)
     - (ansible_os_family not in ["CoreOS", "Container Linux by CoreOS"] or download_delegate == "localhost")
     - (container_changed or not img.stat.exists)
 
@@ -78,12 +79,12 @@
     mode: pull
   delegate_to: localhost
   delegate_facts: no
-  run_once: true
   become: false
   when:
     - download.enabled
     - download.container
     - download_run_once
+    - pull_required|default(download_always_pull)
     - ansible_os_family not in ["CoreOS", "Container Linux by CoreOS"]
     - inventory_hostname == download_delegate
     - download_delegate != "localhost"
@@ -106,6 +107,7 @@
     - download.enabled
     - download.container
     - download_run_once
+    - pull_required|default(download_always_pull)
     - (ansible_os_family not in ["CoreOS", "Container Linux by CoreOS"] and
       inventory_hostname != download_delegate or
       download_delegate == "localhost")
@@ -119,6 +121,7 @@
     - download.enabled
     - download.container
     - download_run_once
+    - pull_required|default(download_always_pull)
     - (ansible_os_family not in ["CoreOS", "Container Linux by CoreOS"] and
       inventory_hostname != download_delegate or download_delegate == "localhost")
   tags:

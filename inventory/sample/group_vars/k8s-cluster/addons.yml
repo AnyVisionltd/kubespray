@@ -61,7 +61,7 @@ ingress_nginx_enabled: true
 ingress_nginx_host_network: true
 ingress_nginx_nodeselector:
 # node-role.kubernetes.io/master: ""
-  node-role.kubernetes.io/node: ""
+  node.kubernetes.io/node: ""
 ingress_nginx_tolerations:
   - key: "node-role.kubernetes.io/master"
     operator: "Equal"

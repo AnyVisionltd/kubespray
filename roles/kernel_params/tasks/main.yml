@@ -1,3 +1,9 @@
+- name: set timezone
+  timezone:
+    name: "{{timezone_name}}"
+  when: timezone_name is defined
+
+
 - name: update nofile soft
   pam_limits:
     domain: root

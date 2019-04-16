@@ -69,7 +69,7 @@ if [ $? != 0 ]; then
   apt-get install -y --no-install-recommends python python-pip python-netaddr
 fi
 if [ $airgap == "true" ]; then
-  dpkg-query -l ansible > /dev/null 2>&1
+  dpkg-query -l ansible sshpass > /dev/null 2>&1
   if [ $? != 0 ]; then
     apt-get update
     apt-get install -y --no-install-recommends ansible sshpass

@@ -31,9 +31,12 @@ spec:
     spec:
       containers:
       - args:
+        - --debug=$(CILIUM_DEBUG)
         - --kvstore=etcd
         - --kvstore-opt=etcd.config=/var/lib/etcd-config/etcd.config
-        - --config=/tmp/cilium/config-map
+{% if container_manager == 'crio' %}
+        - --container-runtime=crio
+{% endif %}
         command:
         - cilium-agent
         env:
@@ -47,6 +50,89 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
+        - name: CILIUM_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              key: debug
+              name: cilium-config
+        - name: CILIUM_ENABLE_IPV4
+          valueFrom:
+            configMapKeyRef:
+              key: enable-ipv4
+              name: cilium-config
+              optional: true
+        - name: CILIUM_ENABLE_IPV6
+          valueFrom:
+            configMapKeyRef:
+              key: enable-ipv6
+              name: cilium-config
+              optional: true
+{% if cilium_enable_prometheus %}
+          # Note: this variable is a no-op if not defined, and is used in the
+          # prometheus examples.
+        - name: CILIUM_PROMETHEUS_SERVE_ADDR
+          valueFrom:
+            configMapKeyRef:
+              key: prometheus-serve-addr
+              name: cilium-metrics-config
+              optional: true
+{% endif %}
+        - name: CILIUM_LEGACY_HOST_ALLOWS_WORLD
+          valueFrom:
+            configMapKeyRef:
+              key: legacy-host-allows-world
+              name: cilium-config
+              optional: true
+        - name: CILIUM_SIDECAR_ISTIO_PROXY_IMAGE
+          valueFrom:
+            configMapKeyRef:
+              key: sidecar-istio-proxy-image
+              name: cilium-config
+              optional: true
+        - name: CILIUM_TUNNEL
+          valueFrom:
+            configMapKeyRef:
+              key: tunnel
+              name: cilium-config
+              optional: true
+        - name: CILIUM_MONITOR_AGGREGATION_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: monitor-aggregation-level
+              name: cilium-config
+              optional: true
+        - name: CILIUM_CLUSTERMESH_CONFIG
+          value: /var/lib/cilium/clustermesh/
+        - name: CILIUM_CLUSTER_NAME
+          valueFrom:
+            configMapKeyRef:
+              key: cluster-name
+              name: cilium-config
+              optional: true
+        - name: CILIUM_CLUSTER_ID
+          valueFrom:
+            configMapKeyRef:
+              key: cluster-id
+              name: cilium-config
+              optional: true
+        - name: CILIUM_GLOBAL_CT_MAX_TCP
+          valueFrom:
+            configMapKeyRef:
+              key: ct-global-max-entries-tcp
+              name: cilium-config
+              optional: true
+        - name: CILIUM_GLOBAL_CT_MAX_ANY
+          valueFrom:
+            configMapKeyRef:
+              key: ct-global-max-entries-other
+              name: cilium-config
+              optional: true
+        - name: CILIUM_PREALLOCATE_BPF_MAPS
+          valueFrom:
+            configMapKeyRef:
+              key: preallocate-bpf-maps
+              name: cilium-config
+              optional: true
         - name: CILIUM_FLANNEL_MASTER_DEVICE
           valueFrom:
             configMapKeyRef:
@@ -59,20 +145,56 @@ spec:
               key: flannel-uninstall-on-exit
               name: cilium-config
               optional: true
-{% if cilium_enable_prometheus %}
-        # To be removed in Cilium 1.6, use prometheus-serve-addr in the
-        # cilium-config ConfigMap
-        - name: CILIUM_PROMETHEUS_SERVE_ADDR
+        - name: CILIUM_FLANNEL_MANAGE_EXISTING_CONTAINERS
           valueFrom:
             configMapKeyRef:
-              key: prometheus-serve-addr
-              name: cilium-metrics-config
+              key: flannel-manage-existing-containers
+              name: cilium-config
               optional: true
-{% endif %}
-        - name: CILIUM_CLUSTERMESH_CONFIG
-          value: /var/lib/cilium/clustermesh/
+        - name: CILIUM_DATAPATH_MODE
+          valueFrom:
+            configMapKeyRef:
+              key: datapath-mode
+              name: cilium-config
+              optional: true
+        - name: CILIUM_IPVLAN_MASTER_DEVICE
+          valueFrom:
+            configMapKeyRef:
+              key: ipvlan-master-device
+              name: cilium-config
+              optional: true
+        - name: CILIUM_INSTALL_IPTABLES_RULES
+          valueFrom:
+            configMapKeyRef:
+              key: install-iptables-rules
+              name: cilium-config
+              optional: true
+        - name: CILIUM_MASQUERADE
+          valueFrom:
+            configMapKeyRef:
+              key: masquerade
+              name: cilium-config
+              optional: true
+        - name: CILIUM_AUTO_DIRECT_NODE_ROUTES
+          valueFrom:
+            configMapKeyRef:
+              key: auto-direct-node-routes
+              name: cilium-config
+              optional: true
+        - name: CILIUM_TOFQDNS_ENABLE_POLLER
+          valueFrom:
+            configMapKeyRef:
+              key: tofqdns-enable-poller
+              name: cilium-config
+              optional: true
+        - name: CILIUM_TOFQDNS_PRE_CACHE
+          valueFrom:
+            configMapKeyRef:
+              key: tofqdns-pre-cache
+              name: cilium-config
+              optional: true
         image: {{ cilium_image_repo }}:{{ cilium_image_tag }}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         lifecycle:
           postStart:
             exec:
@@ -94,7 +216,6 @@ spec:
             command:
             - cilium
             - status
-            - --brief
           failureThreshold: 10
           # The initial delay for the liveness probe is intentionally large to
           # avoid an endless kill & restart cycle if in the event that the initial
@@ -116,7 +237,6 @@ spec:
             command:
             - cilium
             - status
-            - --brief
           failureThreshold: 3
           initialDelaySeconds: 5
           periodSeconds: 5
@@ -126,7 +246,6 @@ spec:
           capabilities:
             add:
             - NET_ADMIN
-            - SYS_MODULE
           privileged: true
         volumeMounts:
         - mountPath: /sys/fs/bpf
@@ -154,17 +273,6 @@ spec:
           readOnly: true
         - mountPath: /var/lib/cilium/clustermesh
           name: clustermesh-secrets
-          readOnly: true
-        - mountPath: /tmp/cilium/config-map
-          name: cilium-config-path
-          readOnly: true
-          # Needed to be able to load kernel modules
-        - mountPath: /lib/modules
-          name: lib-modules
-          readOnly: true
-          # Needed by ip[6]tables when loading kernel modules
-        - mountPath: /sbin/modprobe
-          name: sbin-modprobe
           readOnly: true
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
@@ -217,7 +325,7 @@ spec:
           type: DirectoryOrCreate
         name: bpf-maps
 {% if container_manager == 'crio' %}
-        # To read crio events from the node
+        # To read labels from CRI-O containers running in the host
       - hostPath:
           path: /var/run/crio/crio.sock
           type: Socket
@@ -239,16 +347,6 @@ spec:
           path: /etc/cni/net.d
           type: DirectoryOrCreate
         name: etc-cni-netd
-        # To be able to load kernel modules
-      - hostPath:
-          path: /lib/modules
-          type: Directory
-        name: lib-modules
-        # To be able to load ip[6]tables kernel modules
-      - hostPath:
-          path: /sbin/modprobe
-          type: File
-        name: sbin-modprobe
         # To mount the local etcd TLS certificates
       - hostPath:
           path: {{ cilium_cert_dir }}
@@ -262,7 +360,7 @@ spec:
             path: etcd.config
           name: cilium-config
         name: etcd-config-path
-      #   # To read the k8s etcd secrets in case the user might want to use TLS
+        # To read the k8s etcd secrets in case the user might want to use TLS
       # - name: etcd-secrets
       #   secret:
       #     defaultMode: 420
@@ -274,10 +372,6 @@ spec:
           defaultMode: 420
           optional: true
           secretName: cilium-clustermesh
-        # To read the configuration from the config map
-      - configMap:
-          name: cilium-config
-        name: cilium-config-path
   updateStrategy:
     rollingUpdate:
       # Specifies the maximum number of Pods that can be unavailable during the update process.

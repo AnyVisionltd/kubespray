@@ -20,20 +20,22 @@ bin_dir: /usr/local/bin
 #   port: 1234
 
 ## Internal loadbalancers for apiservers
-# loadbalancer_apiserver_localhost: true
+loadbalancer_apiserver_localhost: true
+loadbalancer_apiserver_type: haproxy
 
 ## Local loadbalancer should use this port
 ## And must be set port 6443
-nginx_kube_apiserver_port: 6443
-## If nginx_kube_apiserver_healthcheck_port variable defined, enables proxy liveness check.
-nginx_kube_apiserver_healthcheck_port: 8081
+loadbalancer_apiserver_port: 6443
+
+## If loadbalancer_apiserver_healthcheck_port variable defined, enables proxy liveness check for nginx.
+loadbalancer_apiserver_healthcheck_port: 8081
 
 ### OTHER OPTIONAL VARIABLES
 ## For some things, kubelet needs to load kernel modules.  For example, dynamic kernel services are needed
 ## for mounting persistent volumes into containers.  These may not be loaded by preinstall kubernetes
 ## processes.  For example, ceph and rbd backed volumes.  Set to true to allow kubelet to load kernel
 ## modules.
-# kubelet_load_modules: false
+kubelet_load_modules: true
 
 ## Upstream dns servers
 # upstream_dns_servers:

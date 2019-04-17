@@ -11,3 +11,4 @@
   register: flannel_node_manifests
   when:
     - inventory_hostname in groups['kube-master']
+    

@@ -69,20 +69,24 @@ if [ $? != 0 ]; then
   apt-get install -y --no-install-recommends python python-pip python-netaddr
 fi
 if [ $airgap == "true" ]; then
-  dpkg-query -l ansible > /dev/null 2>&1
+  dpkg-query -l ansible sshpass > /dev/null 2>&1
   if [ $? != 0 ]; then
     apt-get update
-    apt-get install -y --no-install-recommends ansible
+    apt-get install -y --no-install-recommends ansible sshpass
   fi
 else
   pip freeze | grep -i ansible > /dev/null 2>&1
   if [ $? != 0 ]; then
-    pip install setuptools
+    pip install setuptools wheel
     pip install -r requirements.txt
   fi
 fi
 
 # run ansible playbook
+export ANSIBLE_FORCE_COLOR=True
+export ANSIBLE_HOST_KEY_CHECKING=False
+export ANSIBLE_PIPELINING=True
+
 ansible-playbook -vv -i "$inventory" \
   --become --become-user=root \
   -e "$airgap_bool" \

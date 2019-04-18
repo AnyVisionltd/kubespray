@@ -62,6 +62,10 @@
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y {{ ubuntu_packages | join(" ") }}
   become: true
+  retries: 3
+  register: install_python_pip_status
+  until: install_python_pip_status.rc == 0
+  delay: 5  
   environment: {}
   when:
     - need_bootstrap.results | map(attribute='rc') | sort | last | bool

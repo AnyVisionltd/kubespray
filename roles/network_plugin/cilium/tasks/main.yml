@@ -48,14 +48,19 @@
     mode: 0755
   register: cni_bin_dir
 
+- name: Cilium | Copy cni plugins
+  unarchive:
+    src: "{{ local_release_dir }}/cni-plugins-{{ image_arch }}-{{ cni_version }}.tgz"
+    dest: "/opt/cni/bin"
+    mode: 0755
+    remote_src: yes
+
 - name: Cilium | Create network policy directory
   file:
     path: "{{ cilium_policy_dir }}"
     state: directory
 
-- name: Cilium | Copy plugins conflist to /etc/cni/net.d
-  copy:
-    src: "{{ item.s }}"
-    dest: "/etc/cni/net.d/{{ item.d }}"
-  with_items:
-    - {s: "000-cilium-portmap.conflist", d: "000-cilium-portmap.conflist"}
+- name: Cilium | Add hostPort ability to Cilium
+  template:
+    src: 000-cilium-portmap.conflist.j2
+    dest: /etc/cni/net.d/000-cilium-portmap.conflist

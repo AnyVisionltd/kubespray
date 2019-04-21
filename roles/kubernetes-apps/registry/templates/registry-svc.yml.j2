@@ -12,11 +12,7 @@ metadata:
 spec:
   selector:
     k8s-app: registry
-  externalIPs:
-    - {{ ansible_default_ipv4.address }}
-  type: LoadBalancer
   ports:
     - name: registry
       port: 5000
-      targetPort: 5000
       protocol: TCP

@@ -52,3 +52,10 @@
   file:
     path: "{{ cilium_policy_dir }}"
     state: directory
+
+- name: Cilium | Copy plugins conflist to /etc/cni/net.d
+  copy:
+    src: "{{ item.s }}"
+    dest: "/etc/cni/net.d/{{ item.d }}"
+  with_items:
+    - {s: "000-cilium-portmap.conflist", d: "000-cilium-portmap.conflist"}

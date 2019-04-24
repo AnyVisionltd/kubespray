@@ -19,7 +19,7 @@
     mode: 0600
     owner: root
     group: root
-  notify: reload systemd docker
+  notify: restart docker
   when: nvidia_docker_installed.stat.exists == true
 
 - name: configure docker daemon.json
@@ -29,14 +29,14 @@
     mode: 0600
     owner: root
     group: root
-  notify: reload systemd docker
+  notify: restart docker
   vars:
     docker_default_runtime: runc
   when: nvidia_docker_installed.stat.exists == false
 
-- name: Docker kill HUP
-  shell: pkill -HUP dockerd
-  when: nvidia_docker_installed.stat.exists == false
+# - name: Docker kill HUP
+#   shell: pkill -HUP dockerd
+#   when: nvidia_docker_installed.stat.exists == false
 
 #- name: "Add immutable flag"
 #  file: 

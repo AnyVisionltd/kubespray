@@ -19,12 +19,14 @@
     - { role: kubespray-defaults}
     - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
 
+- fail:
+    msg: 'Variable {{repository_address}} is not defined while airgap mode is requested, either manually define {{repository_address}} or disable airgap mode'
+  when: (airgap is defined and airgap == True) and repository_address is not defined
+
 - hosts: all
   gather_facts: false
   vars:
     airgap: False
-    repository_address: "http://{{ ansible_default_ipv4.address }}:8080/"
-    master_ip: "{{ ansible_default_ipv4.address }}"
   pre_tasks:
     - debug:
         var: airgap

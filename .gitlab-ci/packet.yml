@@ -14,7 +14,7 @@
   variables:
     UPGRADE_TEST: "graceful"
 
-packet_ubuntu18-flannel-aio:
+packet_ubuntu18-calico-aio:
   stage: deploy-part1
   <<: *packet
   when: on_success
@@ -26,7 +26,7 @@ packet_ubuntu18-flannel-aio:
 packet_centos7-flannel-addons:
   stage: deploy-part2
   <<: *packet
-  when: manual
+  when: on_success
   except: ['triggers']
   only: [/^pr-.*$/]
 
@@ -73,15 +73,8 @@ packet_ubuntu-contiv-sep:
   except: ['triggers']
   only: ['master', /^pr-.*$/]
 
-packet_ubuntu-cilium-sep:
+packet_ubuntu18-cilium-sep:
   stage: deploy-special
-  <<: *packet
-  when: manual
-  except: ['triggers']
-  only: ['master', /^pr-.*$/]
-
-packet_rhel7-weave:
-  stage: deploy-part2
   <<: *packet
   when: manual
   except: ['triggers']
@@ -94,31 +87,10 @@ packet_debian9-calico-upgrade:
   except: ['triggers']
   only: ['master', /^pr-.*$/]
 
-packet_rhel7-canal-sep:
-  stage: deploy-special
-  <<: *packet
-  when: manual
-  except: ['triggers']
-  only: ['master', /^pr-.*$/]
-
 packet_centos7-calico-ha:
-  stage: deploy-special
+  stage: deploy-part2
   <<: *packet
-  when: manual
-  except: ['triggers']
-  only: ['master', /^pr-.*$/]
-
-packet_centos7-cilium:
-  stage: deploy-special
-  <<: *packet
-  when: manual
-  except: ['triggers']
-  only: ['master', /^pr-.*$/]
-
-packet_rhel7-cilium:
-  stage: deploy-special
-  <<: *packet
-  when: manual
+  when: on_success
   except: ['triggers']
   only: ['master', /^pr-.*$/]
 

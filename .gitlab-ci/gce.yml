@@ -6,10 +6,6 @@
   CI_PLATFORM: "gce"
   PRIVATE_KEY: $GCE_PRIVATE_KEY
 
-.docker_service: &docker_service
-  services:
-    - docker:dind
-
 .cache: &cache
   cache:
     key: "$CI_BUILD_REF_NAME"
@@ -19,7 +15,6 @@
 
 .gce: &gce
   extends: .testcases
-  <<: *docker_service
   <<: *cache
   variables:
     <<: *gce_variables
@@ -56,7 +51,7 @@ gce_coreos-calico-aio:
 gce_centos7-flannel-addons:
   stage: deploy-gce
   <<: *gce
-  when: on_success
+  when: manual
   except: ['triggers']
   only: [/^pr-.*$/]
 
@@ -64,7 +59,7 @@ gce_centos7-flannel-addons:
 
 gce_centos-weave-kubeadm-sep:
   stage: deploy-gce
-  <<: *gce
+  extends: .gce
   variables:
     <<: *centos_weave_kubeadm_variables
   when: on_success
@@ -131,7 +126,7 @@ gce_ubuntu-flannel-ha:
 
 gce_centos-weave-kubeadm-triggers:
   stage: deploy-gce
-  <<: *gce
+  extends: .gce
   variables:
     <<: *centos_weave_kubeadm_variables
   when: on_success
@@ -151,7 +146,7 @@ gce_coreos-cilium:
   except: ['triggers']
   only: ['master', /^pr-.*$/]
 
-gce_ubuntu-cilium-sep:
+gce_ubuntu18-cilium-sep:
   stage: deploy-special
   <<: *gce
   when: manual
@@ -232,7 +227,7 @@ gce_centos7-kube-router:
 
 gce_centos7-multus-calico:
   stage: deploy-gce
-  <<: *gce
+  extends: .gce
   variables:
     <<: *centos7_multus_calico_variables
   when: manual

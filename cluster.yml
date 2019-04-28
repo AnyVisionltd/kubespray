@@ -19,10 +19,6 @@
     - { role: kubespray-defaults}
     - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
 
-- fail:
-    msg: 'Variable {{repository_address}} is not defined while airgap mode is requested, either manually define {{repository_address}} or disable airgap mode'
-  when: (airgap is defined and airgap == True) and repository_address is not defined
-
 - hosts: all
   gather_facts: false
   vars:
@@ -30,6 +26,9 @@
   pre_tasks:
     - debug:
         var: airgap
+    - fail:
+        msg: 'Variable {{repository_address}} is not defined while airgap mode is requested, either manually define {{repository_address}} or disable airgap mode'
+      when: (airgap is defined and airgap == True) and repository_address is not defined        
     - name: 'clear all original repositories'
       raw: if [ -f /etc/apt/sources.list ]; then cp -n /etc/apt/sources.list /etc/apt/sources.list.original; fi
       when: airgap is defined and airgap == True

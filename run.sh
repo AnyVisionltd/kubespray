@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Absolute path to this script
+SCRIPT=$(readlink -f "$0")
+# Absolute path to the script directory
+BASEDIR=$(dirname "$SCRIPT")
+
 DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 
 function valid_ip {
@@ -107,7 +112,7 @@ if [ -z "$repository_address" ] && [ $airgap == "true" ]; then
 fi
 
 echo ""
-echo "Making sure that all dependencies are installed, please wait..."
+echo "===== Making sure that all dependencies are installed, please wait..."
 
 # install python, pip and sshpass
 dpkg-query -l python python-pip python-netaddr sshpass > /dev/null 2>&1
@@ -124,8 +129,6 @@ pip install --quiet --no-index --find-links ./pip_deps/ setuptools
 pip install --quiet --no-index --find-links ./pip_deps/ -r requirements.txt
 set +e
 
-echo ""
-echo ""
 if [ $airgap == "true" ]; then
     echo "===== Airgap installation mode: Yes"
     echo "===== Using APT repository address: $repository_address"
@@ -144,12 +147,12 @@ if [ ! $skip_kubespray == "true" ]; then
       --become --become-user=root \
       -e "$airgap_bool" \
       -e repository_address="$repository_address" \
-      cluster.yml "$@"
+      $BASEDIR/cluster.yml "$@"
 fi
 
 if [ $metallb == "true" ]; then
     ansible-playbook -vv -i "$inventory" \
       --become --become-user=root \
       -e "$metallb_vars" \
-      contrib/metallb/metallb.yml "$@"
+      $BASEDIR/contrib/metallb/metallb.yml "$@"
 fi

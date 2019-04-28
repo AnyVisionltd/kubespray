@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 
@@ -91,18 +90,23 @@ if [ -z "$repository_address" ] && [ $airgap == "true" ]; then
     fi
 fi
 
+echo ""
+echo "Making sure that all dependencies are installed, please wait..."
+
 # install python, pip and sshpass
 dpkg-query -l python python-pip python-netaddr sshpass > /dev/null 2>&1
 if [ $? != 0 ]; then
-    apt-get update
-    apt-get install -y --no-install-recommends python python-pip python-netaddr sshpass
+    set -e
+    apt-get -qq update > /dev/null
+    apt-get -qq install -y --no-install-recommends python python-pip python-netaddr sshpass > /dev/null
+    set +e
 fi
 
 # install ansible
-echo ""
-echo "Making sure that all dependencies are installed, please wait..."
+set -e
 pip install --quiet --no-index --find-links ./pip_deps/ setuptools
 pip install --quiet --no-index --find-links ./pip_deps/ -r requirements.txt
+set +e
 
 echo ""
 echo ""

@@ -22,13 +22,14 @@ function showhelp {
    echo ""
    echo "Usage examples:"
    echo "Online: $0 --inventory inventory/local/hosts.ini"
-   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/ --metallb -e metallb.ip_range='10.5.0.50-10.5.0.99'"
+   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/ --metallb-range '10.5.0.50-10.5.0.99'"
    echo ""
    echo "OPTIONS:"
    echo "  [-i|--inventory path] Ansible inventory file path (required)"
    echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
    echo "  [-a|--airgap] Airgap installation mode (default: false)"
-   echo "  [-m|--metallb] Deploy MetalLB layer 2 load-balancer (default: false)"
+   echo "  [-m|--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
+   echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
    echo ""
 }
@@ -37,6 +38,7 @@ function showhelp {
 airgap="false"
 airgap_bool='{airgap: False}'
 metallb="false"
+skip_kubespray="false"
 
 ## Deploy
 POSITIONAL=()
@@ -59,9 +61,16 @@ while [[ $# -gt 0 ]]; do
         airgap_bool='{airgap: True}'
         continue
         ;;
-        -m|--metallb)
+        -m|--metallb-range)
         shift
         metallb="true"
+	metallb_vars="{'metallb':{'ip_range':'$1','limits':{'cpu':'100m','memory':'100Mi'},'port':'7472','version':'v0.7.3'}}"
+	shift
+        continue
+        ;;
+        --skip-kubespray)
+        shift
+        skip_kubespray="true"
         continue
         ;;
         -i|--inventory)
@@ -130,14 +139,17 @@ export ANSIBLE_FORCE_COLOR=True
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_PIPELINING=True
 
-ansible-playbook -vv -i "$inventory" \
-  --become --become-user=root \
-  -e "$airgap_bool" \
-  -e repository_address="$repository_address" \
-  cluster.yml "$@"
+if [ ! $skip_kubespray == "true" ]; then
+    ansible-playbook -vv -i "$inventory" \
+      --become --become-user=root \
+      -e "$airgap_bool" \
+      -e repository_address="$repository_address" \
+      cluster.yml "$@"
+fi
 
 if [ $metallb == "true" ]; then
     ansible-playbook -vv -i "$inventory" \
       --become --become-user=root \
+      -e "$metallb_vars" \
       contrib/metallb/metallb.yml "$@"
 fi

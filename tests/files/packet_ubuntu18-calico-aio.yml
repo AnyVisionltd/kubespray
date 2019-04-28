@@ -1,8 +1,10 @@
+---
 # Instance settings
-cloud_image: rhel-server-7
-mode: default
+cloud_image: ubuntu-1804
+mode: aio
+vm_memory: 1600Mi
 
 # Kubespray settings
-kube_network_plugin: weave
+kube_network_plugin: calico
 deploy_netchecker: true
 dns_min_replicas: 1

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eo pipefail
 
 DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 
@@ -90,25 +91,18 @@ if [ -z "$repository_address" ] && [ $airgap == "true" ]; then
     fi
 fi
 
-# install python and pip
-dpkg-query -l python python-pip python-netaddr > /dev/null 2>&1
+# install python, pip and sshpass
+dpkg-query -l python python-pip python-netaddr sshpass > /dev/null 2>&1
 if [ $? != 0 ]; then
     apt-get update
-    apt-get install -y --no-install-recommends python python-pip python-netaddr
+    apt-get install -y --no-install-recommends python python-pip python-netaddr sshpass
 fi
-if [ $airgap == "true" ]; then
-    dpkg-query -l ansible sshpass > /dev/null 2>&1
-    if [ $? != 0 ]; then
-        apt-get update
-        apt-get install -y --no-install-recommends ansible sshpass
-    fi
-else
-    pip freeze | grep -i ansible > /dev/null 2>&1
-    if [ $? != 0 ]; then
-      pip install setuptools wheel
-      pip install -r requirements.txt
-    fi
-fi
+
+# install ansible
+echo ""
+echo "Making sure that all dependencies are installed, please wait..."
+pip install --quiet --no-index --find-links ./pip_deps/ setuptools
+pip install --quiet --no-index --find-links ./pip_deps/ -r requirements.txt
 
 echo ""
 echo ""

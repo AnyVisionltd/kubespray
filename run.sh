@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Absolute path to this script
+SCRIPT=$(readlink -f "$0")
+# Absolute path to the script directory
+BASEDIR=$(dirname "$SCRIPT")
+
 DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 
 function valid_ip {
@@ -22,12 +27,14 @@ function showhelp {
    echo ""
    echo "Usage examples:"
    echo "Online: $0 --inventory inventory/local/hosts.ini"
-   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/"
+   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/ --metallb-range '10.5.0.50-10.5.0.99'"
    echo ""
    echo "OPTIONS:"
    echo "  [-i|--inventory path] Ansible inventory file path (required)"
    echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
    echo "  [-a|--airgap] Airgap installation mode (default: false)"
+   echo "  [-m|--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
+   echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
    echo ""
 }
@@ -35,6 +42,8 @@ function showhelp {
 ## Defaults
 airgap="false"
 airgap_bool='{airgap: False}'
+metallb="false"
+skip_kubespray="false"
 
 ## Deploy
 POSITIONAL=()
@@ -55,6 +64,18 @@ while [[ $# -gt 0 ]]; do
         shift
         airgap="true"
         airgap_bool='{airgap: True}'
+        continue
+        ;;
+        -m|--metallb-range)
+        shift
+        metallb="true"
+	metallb_vars="{'metallb':{'ip_range':'$1','limits':{'cpu':'100m','memory':'100Mi'},'port':'7472','version':'v0.7.3'}}"
+	shift
+        continue
+        ;;
+        --skip-kubespray)
+        shift
+        skip_kubespray="true"
         continue
         ;;
         -i|--inventory)
@@ -91,7 +112,7 @@ if [ -z "$repository_address" ] && [ $airgap == "true" ]; then
 fi
 
 echo ""
-echo "Making sure that all dependencies are installed, please wait..."
+echo "===== Making sure that all dependencies are installed, please wait..."
 
 # install python, pip and sshpass
 dpkg-query -l python python-pip python-netaddr sshpass > /dev/null 2>&1
@@ -108,8 +129,6 @@ pip install --quiet --no-index --find-links ./pip_deps/ setuptools
 pip install --quiet --no-index --find-links ./pip_deps/ -r requirements.txt
 set +e
 
-echo ""
-echo ""
 if [ $airgap == "true" ]; then
     echo "===== Airgap installation mode: Yes"
     echo "===== Using APT repository address: $repository_address"
@@ -123,8 +142,17 @@ export ANSIBLE_FORCE_COLOR=True
 export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_PIPELINING=True
 
-ansible-playbook -vv -i "$inventory" \
-  --become --become-user=root \
-  -e "$airgap_bool" \
-  -e repository_address="$repository_address" \
-  cluster.yml "$@"
+if [ ! $skip_kubespray == "true" ]; then
+    ansible-playbook -vv -i "$inventory" \
+      --become --become-user=root \
+      -e "$airgap_bool" \
+      -e repository_address="$repository_address" \
+      $BASEDIR/cluster.yml "$@"
+fi
+
+if [ $metallb == "true" ]; then
+    ansible-playbook -vv -i "$inventory" \
+      --become --become-user=root \
+      -e "$metallb_vars" \
+      $BASEDIR/contrib/metallb/metallb.yml "$@"
+fi

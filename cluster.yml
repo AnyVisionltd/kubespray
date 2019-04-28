@@ -16,7 +16,7 @@
 - hosts: bastion[0]
   gather_facts: False
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
 
 - hosts: all
@@ -40,7 +40,7 @@
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   gather_facts: false
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: bootstrap-os, tags: bootstrap-os}
 
 - hosts: k8s-cluster:etcd:calico-rr
@@ -63,7 +63,7 @@
       include_vars: vars/airgap_download.yml
       when: airgap is defined and airgap == True
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: kubernetes/preinstall, tags: preinstall }
     - { role: "container-engine", tags: "container-engine", when: deploy_container_engine|default(true) }
     - { role: "load-kubernetes-images", tags: "load-kubernetes-images", when: "airgap is defined and airgap == True", delegate_to: 127.0.0.1 }
@@ -73,20 +73,20 @@
 - hosts: etcd
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: etcd, tags: etcd, etcd_cluster_setup: true, etcd_events_cluster_setup: "{{ etcd_events_cluster_enabled }}" }
 
 - hosts: k8s-cluster:calico-rr
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: etcd, tags: etcd, etcd_cluster_setup: false, etcd_events_cluster_setup: false }
 
 - hosts: k8s-cluster
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
     - { role: kernel_params, become: yes, tags: ["kernel"] }
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: kubernetes/node, tags: node }
     #- { role: nvidia-prerequisite, become: yes, tags: ["nvidia-driver"] }
     - { role: nvidia-driver, become: yes, tags: ["nvidia-driver"] }
@@ -97,7 +97,7 @@
 - hosts: kube-master
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: kubernetes/master, tags: master }
     - { role: kubernetes/client, tags: client }
     - { role: kubernetes-apps/cluster_roles, tags: cluster-roles }
@@ -105,21 +105,21 @@
 - hosts: k8s-cluster
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: kubernetes/kubeadm, tags: kubeadm}
     - { role: network_plugin, tags: network }
 
 - hosts: kube-master[0]
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: kubernetes-apps/rotate_tokens, tags: rotate_tokens, when: "secret_changed|default(false)" }
     - { role: win_nodes/kubernetes_patch, tags: ["master", "win_nodes"]}
 
 - hosts: kube-master
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: kubernetes-apps/network_plugin, tags: network }
     - { role: kubernetes-apps/policy_controller, tags: policy-controller }
     - { role: kubernetes-apps/ingress_controller, tags: ingress-controller }
@@ -128,13 +128,13 @@
 - hosts: calico-rr
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: network_plugin/calico/rr, tags: network }
 
 - hosts: kube-master
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
   roles:
-    - { role: kubespray-defaults}
+    - { role: kubespray-defaults }
     - { role: kubernetes-apps, tags: apps }
     - { role: kubernetes/preinstall, when: "dns_mode != 'none' and resolvconf_mode == 'host_resolvconf'", tags: resolvconf, dns_late: true }
     - { role: "load-bt-images", tags: "load-bt-images", when: "registry_enabled and airgap is defined and airgap == True" }

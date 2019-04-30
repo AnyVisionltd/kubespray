@@ -97,7 +97,7 @@ ingress_nginx_configmap_tcp_services:
   9443: "default/apigateway:9443"
   #8080: "default/apigateway:8080"
   #5443: "default/api:5443"
-  #3000: "default/api:3000"
+  3000: "default/api:3000"
   #2000: "default/api-master:2000"
   16180: "default/master-sync:16180"
   5671: "default/rabbitmq:5671"

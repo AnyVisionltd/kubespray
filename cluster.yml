@@ -28,7 +28,7 @@
         var: airgap
     - fail:
         msg: 'Variable {{repository_address}} is not defined while airgap mode is requested, either manually define {{repository_address}} or disable airgap mode'
-      when: (airgap is defined and airgap == True) and repository_address is not defined        
+      when: (airgap is defined and airgap == True) and repository_address is not defined
     - name: 'clear all original repositories'
       raw: if [ -f /etc/apt/sources.list ]; then cp -n /etc/apt/sources.list /etc/apt/sources.list.original; fi
       when: airgap is defined and airgap == True
@@ -66,7 +66,7 @@
     - { role: kubespray-defaults }
     - { role: kubernetes/preinstall, tags: preinstall }
     - { role: "container-engine", tags: "container-engine", when: deploy_container_engine|default(true) }
-    - { role: "load-kubernetes-images", tags: "load-kubernetes-images", when: "airgap is defined and airgap == True", delegate_to: 127.0.0.1 }
+    - { role: load-kubernetes-images, tags: load-kubernetes-images, when: "airgap is defined and airgap == True", delegate_to: 127.0.0.1 }
     - { role: download, tags: download, when: "not skip_downloads" }
   environment: "{{proxy_env}}"
 
@@ -136,6 +136,11 @@
   roles:
     - { role: kubespray-defaults }
     - { role: kubernetes-apps, tags: apps }
-    - { role: kubernetes/preinstall, when: "dns_mode != 'none' and resolvconf_mode == 'host_resolvconf'", tags: resolvconf, dns_late: true }
-    - { role: "load-bt-images", tags: "load-bt-images", when: "registry_enabled and airgap is defined and airgap == True" }
+    - { role: load-bt-images, tags: load-bt-images, when: "registry_enabled and airgap is defined and airgap == True" }
   environment: "{{proxy_env}}"
+
+- hosts: k8s-cluster
+  any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
+  roles:
+    - { role: kubespray-defaults}
+    - { role: kubernetes/preinstall, when: "dns_mode != 'none' and resolvconf_mode == 'host_resolvconf'", tags: resolvconf, dns_late: true }

@@ -114,13 +114,30 @@ fi
 echo ""
 echo "===== Making sure that all dependencies are installed, please wait..."
 
-# install python, pip and sshpass
-dpkg-query -l python python-pip python-netaddr sshpass > /dev/null 2>&1
-if [ $? != 0 ]; then
-    set -e
-    apt-get -qq update > /dev/null
-    apt-get -qq install -y --no-install-recommends python python-pip python-netaddr sshpass > /dev/null
-    set +e
+if [ -x "$(command -v apt-get)" ]; then
+
+	# install python, pip and sshpass
+	dpkg-query -l python python-pip python-netaddr sshpass > /dev/null 2>&1
+	if [ $? != 0 ]; then
+	    set -e
+	    apt-get -qq update > /dev/null
+	    apt-get -qq install -y --no-install-recommends python python-pip python-netaddr sshpass > /dev/null
+	    set +e
+	fi
+elif [ -x "$(command -v yum)" ]; then
+	for package in \
+		python \
+		python-pip \
+		python-netaddr \
+		sshpass \
+	; do
+		yum list installed "$package" > /dev/null 2>&1
+	        if [ $? != 0 ]; then
+		   set -e
+		   yum install -q -y $package > /dev/null
+		   set +e
+		fi
+	done
 fi
 
 # install ansible

@@ -76,9 +76,9 @@
 - name: disable transparent_hugepage on run time
   shell: "{{item}}"
   with_items:
-    - 'echo never > /sys/kernel/mm/redhat_transparent_hugepage/enabled'
-    - 'echo never > /sys/kernel/mm/redhat_transparent_hugepage/defrag'
-    - 'echo 0 > /sys/kernel/mm/redhat_transparent_hugepage/khugepaged/defrag'
+    - 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+    - 'echo never > /sys/kernel/mm/transparent_hugepage/defrag'
+    - 'echo 0 > /sys/kernel/mm/transparent_hugepage/khugepaged/defrag'
   when: ansible_os_family == "RedHat"
 
 # - name: Disable THP support scripts added to rc.local

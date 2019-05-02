@@ -15,7 +15,6 @@ function showhelp {
    echo ""
    echo "OPTIONS:"
    echo "  [-i|--inventory path] Ansible inventory file path (required)"
-   echo "  [-r|--reset] Manually specify APT repository address (default: default route ipv4 address)"
    echo "  [-h|--help] Display this usage message"
    echo ""
 }
@@ -30,12 +29,6 @@ while [[ $# -gt 0 ]]; do
         -h|help|--help)
         showhelp
         exit 0
-        ;;
-        -r|--reset)
-        shift
-        reset="$1"
-        shift
-        continue
         ;;
         -i|--inventory)
         shift
@@ -113,5 +106,3 @@ case "$response" in
         exit 0;
         ;;
 esac
-
-

@@ -47,19 +47,20 @@
   register: result
   run_once: true
   when: download_run_once
+  changed_when: false
 
 - vars:
     kubeadm_images_list: "{{ result.stdout_lines }}"
   set_fact:
     kubeadm_image:
-      key: "{{ (item | regex_replace('^(?:.*\\/)*','')).split(':')[0] }}"
+      key: "kubeadm_{{ (item | regex_replace('^(?:.*\\/)*','')).split(':')[0] }}"
       value:
         enabled: true
         container: true
         repo: "{{ item.split(':')[0] }}"
         tag: "{{ item.split(':')[1] }}"
         groups:
-          - kube-master
+          - k8s-cluster
   loop: "{{ kubeadm_images_list | flatten(levels=1) }}"
   run_once: true
   when: download_run_once

@@ -10,9 +10,7 @@ data:
   etcd-config: |-
     ---
     endpoints:
-{% for ip_addr in etcd_access_addresses.split(',') %}
-      - {{ ip_addr }}
-{% endfor %}
+      - https://cilium-etcd-client.kube-system.svc:2379
     #
     # In case you want to use TLS in etcd, uncomment the 'ca-file' line
     # and create a kubernetes secret by following the tutorial in

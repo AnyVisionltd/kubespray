@@ -235,11 +235,6 @@ spec:
           path: /etc/cni/net.d
           type: DirectoryOrCreate
         name: etc-cni-netd
-        # To mount the local etcd TLS certificates
-      - hostPath:
-          path: {{ cilium_cert_dir }}
-          type: DirectoryOrCreate
-        name: etcd-secrets
         # To be able to load kernel modules
       - hostPath:
           path: /lib/modules
@@ -253,11 +248,11 @@ spec:
           name: cilium-config
         name: etcd-config-path
         # To read the k8s etcd secrets in case the user might want to use TLS
-      # - name: etcd-secrets
-      #   secret:
-      #     defaultMode: 420
-      #     optional: true
-      #     secretName: cilium-etcd-secrets
+      - name: etcd-secrets
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: cilium-etcd-secrets
         # To read the clustermesh configuration
       - name: clustermesh-secrets
         secret:

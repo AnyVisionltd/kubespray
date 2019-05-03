@@ -1,0 +1,23 @@
+---
+- name: ChartMuseum | Create addon dir
+  file:
+    path: "{{ kube_config_dir }}/addons/chartmuseum"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when:
+    - inventory_hostname == groups['kube-master'][0]
+
+- name: ChartMuseum | Install helm chart
+  helm:
+    host: localhost
+    chart:
+      name: chartmuseum
+      source:
+        type: directory
+        location: {{ kube_config_dir }}/addons/chartmuseum
+    state: installed
+    name: chartmuseum
+    namespace: chartmuseum
+  when: inventory_hostname == groups['kube-master'][0]

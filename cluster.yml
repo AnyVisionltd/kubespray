@@ -136,6 +136,7 @@
   roles:
     - { role: kubespray-defaults }
     - { role: kubernetes-apps, tags: apps }
+    - { role: kubernetes-apps/chartmuseum, tags: ["apps", "chartmuseum"] }
     - { role: load-bt-images, tags: load-bt-images, when: "registry_enabled and airgap is defined and airgap == True" }
   environment: "{{proxy_env}}"
 

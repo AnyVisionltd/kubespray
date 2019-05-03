@@ -9,15 +9,46 @@
   when:
     - inventory_hostname == groups['kube-master'][0]
 
+- name: ChartMuseum | Copy chart to addon dir
+  synchronize:
+    src: chart/
+    dest: "{{ kube_config_dir }}/addons/chartmuseum/"
+  #delegate_to: "{{ inventory_hostname }}"
+
+- set_fact:
+    tun_pid_file: "{{ kube_config_dir }}/addons/chartmuseum/tun.pid"
+
+- name: ChartMuseum | Set up a tunnel to Tiller
+  shell: |
+    tiller_pod="$(kubectl get pod -l app=helm,name=tiller --namespace kube-system -o name|cut -d/ -f2)"
+    nohup kubectl port-forward "$tiller_pod" 44134:44134 --namespace kube-system </dev/null >/dev/null 2>&1 &
+    echo "$!" >{{ tun_pid_file|quote }}
+
+- name: ChartMuseum | Uninstall helm chart
+  helm:
+    host: localhost
+    port: 44134
+    state: purged
+    name: chartmuseum
+    disable_hooks: true
+  when: inventory_hostname == groups['kube-master'][0]
+
 - name: ChartMuseum | Install helm chart
   helm:
     host: localhost
+    port: 44134
     chart:
       name: chartmuseum
       source:
         type: directory
-        location: {{ kube_config_dir }}/addons/chartmuseum
-    state: installed
+        location: "{{ kube_config_dir }}/addons/chartmuseum"
+    state: present
     name: chartmuseum
     namespace: chartmuseum
+    disable_hooks: true
   when: inventory_hostname == groups['kube-master'][0]
+
+- name: ChartMuseum | Tear down the tunnel to Tiller
+  shell: |
+    kill "$(cat {{ tun_pid_file|quote }})" || true
+    rm -f {{ tun_pid_file|quote }}

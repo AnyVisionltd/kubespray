@@ -26,7 +26,7 @@ local_path_provisioner_reclaim_policy: Delete
 local_path_provisioner_claim_root: /ssd/local-path-provisioner/
 local_path_provisioner_debug: true
 local_path_provisioner_image_repo: "rancher/local-path-provisioner"
-local_path_provisioner_image_tag: "v0.0.6"
+local_path_provisioner_image_tag: "v0.0.7"
 
 # Local volume provisioner deployment
 local_volume_provisioner_enabled: false

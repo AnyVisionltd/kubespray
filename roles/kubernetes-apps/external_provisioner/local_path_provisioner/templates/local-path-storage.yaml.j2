@@ -61,7 +61,7 @@ spec:
       containers:
       - name: local-path-provisioner
         image: {{ local_path_provisioner_image_repo }}:{{ local_path_provisioner_image_tag }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ k8s_image_pull_policy }}
         command:
         - local-path-provisioner
 {% if local_path_provisioner_debug|default(false) %}
@@ -108,4 +108,3 @@ data:
                 }
                 ]
         }
-

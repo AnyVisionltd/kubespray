@@ -20,7 +20,7 @@
     - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
 
 - hosts: all
-  gather_facts: false
+  gather_facts: true
   vars:
     airgap: False
   pre_tasks:
@@ -139,7 +139,7 @@
   roles:
     - { role: kubespray-defaults }
     - { role: kubernetes-apps, tags: apps }
-    - { role: load-bt-images, tags: load-bt-images, when: "registry_enabled and airgap is defined and airgap == True" }
+    - { role: load-app-images, tags: load-app-images, when: "registry_enabled and airgap is defined and airgap == True" }
   environment: "{{proxy_env}}"
 
 - hosts: k8s-cluster

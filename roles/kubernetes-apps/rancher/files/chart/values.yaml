@@ -35,7 +35,7 @@ debug: false
 #   value: "registry.example.com"
 
 # Fully qualified name to reach your Rancher server
-hostname: rancher.cluster.local
+#hostname: rancher.anv.local
 
 ## Optional array of imagePullSecrets containing private registry credentials
 ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
@@ -87,4 +87,4 @@ resources: {}
 #   Where to offload the TLS/SSL encryption
 # - ingress (default)
 # - external
-tls: ingress
+tls: external

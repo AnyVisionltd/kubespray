@@ -15,5 +15,5 @@
     dest: "{{ kube_config_dir }}/addons/chartmuseum/"
 
 - name: ChartMuseum | Install helm chart
-  shell: "helm upgrade --install chartmuseum {{ kube_config_dir }}/addons/chartmuseum --namespace kube-system --reuse-values"
+  shell: "helm upgrade --install chartmuseum {{ kube_config_dir }}/addons/chartmuseum --reuse-values"
   when: inventory_hostname == groups['kube-master'][0]

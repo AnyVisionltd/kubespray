@@ -7,3 +7,5 @@ hyperkube_download_url: "{{ repository_address }}/kubespray-binaries/hyperkube"
 etcd_download_url: "{{ repository_address }}/kubespray-binaries/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz"
 cni_download_url: "{{ repository_address }}/kubespray-binaries/cni-plugins-{{ image_arch }}-{{ cni_version }}.tgz"
 calicoctl_download_url: "{{ repository_address }}/kubespray-binaries//calicoctl-linux-{{ image_arch }}"
+
+helm_skip_refresh: True

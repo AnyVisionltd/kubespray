@@ -125,6 +125,9 @@ if [ -x "$(command -v apt-get)" ]; then
 	    set +e
 	fi
 elif [ -x "$(command -v yum)" ]; then
+     #Enable epel-release
+     subscription-manager repos --enable=rhel-7-server-extras-rpms
+     yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 	for package in \
 		python \
 		python-pip \

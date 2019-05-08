@@ -107,7 +107,7 @@ ingress_nginx_configmap_tcp_services:
   1935: "default/rtstreamer:1935"
   27017: "default/mongodb:27017"
 # ingress_nginx_configmap_udp_services:
-#   53: "kube-system/kube-dns:53"
+#   53: "kube-system/coredns:53"
 
 # Cert manager deployment
 cert_manager_enabled: true

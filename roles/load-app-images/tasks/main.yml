@@ -1,2 +1,2 @@
-- name: load bt images
+- name: load app images
   shell: "{{playbook_dir}}/scripts/load-images.sh --images {{ docker_images_archive }} --registry {{ kubernetes_docker_registry }}"

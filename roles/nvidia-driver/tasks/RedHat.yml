@@ -25,7 +25,7 @@
     state: present
     update_cache: yes
   when: (get_os_version is defined) and (get_os_version.stdout.find('Workstation') == -1)
-  notofy: Reboot node
+  notify: Reboot node
 
 
 - name: install cuda-driver 410 on redhat workstation
@@ -50,4 +50,4 @@
     state: present
     update_cache: yes
   when: (get_os_version is defined) and (get_os_version.stdout.find('Workstation') != -1) and (ansible_distribution == "RedHat")
-  notofy: Reboot node
+  notify: Reboot node

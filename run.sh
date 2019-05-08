@@ -27,7 +27,7 @@ function showhelp {
    echo ""
    echo "Usage examples:"
    echo "Online: $0 --inventory inventory/local/hosts.ini"
-   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/ --metallb-range '10.5.0.50-10.5.0.99'"
+   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8085/ --metallb-range '10.5.0.50-10.5.0.99'"
    echo ""
    echo "OPTIONS:"
    echo "  [-i|--inventory path] Ansible inventory file path (required)"
@@ -102,7 +102,7 @@ fi
 
 if [ -z "$repository_address" ] && [ $airgap == "true" ]; then
     if valid_ip $DEFAULT_IPV4; then
-        repository_address="http://$DEFAULT_IPV4:8080/"
+        repository_address="http://$DEFAULT_IPV4:8085/"
     else
         echo ""
         echo "ERROR: Unable to retrieve a valid default ipv4 address, please specify the APT repository address manually using the --repository option"

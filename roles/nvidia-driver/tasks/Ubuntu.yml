@@ -20,4 +20,4 @@
     state: present
     install_recommends: no
     update_cache: yes
-  notofy: Reboot node
+  notify: Reboot node

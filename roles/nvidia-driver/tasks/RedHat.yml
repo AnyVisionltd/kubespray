@@ -41,7 +41,7 @@
       - nvidia-driver-NvFBCOpenGL-410.79-1.el7.x86_64
       - nvidia-xconfig-410.79-1.el7.x86_64
       - nvidia-driver-devel-410.79-1.el7.x86_64
-      - libnvidia-container-tools-1.0.1-1.x86_64
+#      - libnvidia-container-tools-1.0.1-1.x86_64
       - nvidia-libXNVCtrl-410.79-1.el7.x86_64
       - nvidia-settings-410.79-1.el7.x86_64
       - nvidia-persistenced-410.79-1.el7.x86_64

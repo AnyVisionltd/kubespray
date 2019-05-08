@@ -125,9 +125,16 @@ if [ -x "$(command -v apt-get)" ]; then
 	    set +e
 	fi
 elif [ -x "$(command -v yum)" ]; then
-     #Enable epel-release
-     subscription-manager repos --enable=rhel-7-server-extras-rpms
-     yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    curl -O https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    rpm -i --force ./epel-release-latest-7.noarch.rpm
+    grep -q  'Workstation' /etc/redhat-release
+    if [ $? -eq 0 ] ; then
+       if ! rpm --quiet --query container-selinux; then
+          sudo rpm -ihv http://ftp.riken.jp/Linux/cern/centos/7/extras/x86_64/Packages/container-selinux-2.9-4.el7.noarch.rpm
+       fi
+    fi
+    sudo yum install -y python-pip git yum pciutils ansible
+
 	for package in \
 		python \
 		python-pip \

@@ -22,11 +22,39 @@ function valid_ip {
     return $stat
 }
 
+
+get_kubernetes_repo(){
+    if [ -z "$tokenkey" ]; then
+        echo ""
+        echo "ERROR: Token is not specified."
+        usage
+        exit 1
+    fi
+    echo "Login to gcr.io"
+    docker login "https://gcr.io" --username "oauth2accesstoken" --password $tokenkey
+    echo "Pulling kubernetes container repo: $tokenkey"
+    image_name=gcr.io/anyvision-training/kubernetes:master
+    docker pull $image_name
+    id=$(docker create $image_name)
+    docker cp $id:/kubernetes /root/
+    docker rm -v $id
+    deploy_bt
+
+}
+
+deploy_bt(){
+    cd /root/kubernetes/templates/
+    ./deployer.sh -k  "$tokenkey"
+    ./deployer.sh -b
+
+}
+
+
 #arguments
 function showhelp {
    echo ""
    echo "Usage examples:"
-   echo "Online: $0 --inventory inventory/local/hosts.ini"
+   echo "Online: $0 --token < gcr.io token > --inventory inventory/local/hosts.ini"
    echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/ --metallb-range '10.5.0.50-10.5.0.99'"
    echo ""
    echo "OPTIONS:"
@@ -36,6 +64,7 @@ function showhelp {
    echo "  [-m|--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
    echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
+   echo "  [-k|--token] Provide a gcr.io registry token"
    echo ""
 }
 
@@ -72,6 +101,11 @@ while [[ $# -gt 0 ]]; do
 	metallb_vars="{'metallb':{'ip_range':'$1','limits':{'cpu':'100m','memory':'100Mi'},'port':'7472','version':'v0.7.3'}}"
 	shift
         continue
+        ;;
+        -k|token|--token)
+        shift
+        tokenkey="$1"
+        shift
         ;;
         --skip-kubespray)
         shift
@@ -183,3 +217,7 @@ if [ $metallb == "true" ]; then
       -e "$metallb_vars" \
       $BASEDIR/contrib/metallb/metallb.yml "$@"
 fi
+
+# Get kubernetes repo and deploy BT
+get_kubernetes_repo
+

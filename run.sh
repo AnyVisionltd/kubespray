@@ -65,6 +65,7 @@ function showhelp {
    echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
    echo "  [-k|--token] Provide a gcr.io registry token"
+   echo "  [-v|--version] Provide version for kubernetes repository"
    echo ""
 }
 

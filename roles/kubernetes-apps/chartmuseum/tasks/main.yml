@@ -6,14 +6,31 @@
     owner: root
     group: root
     mode: 0755
-  when:
-    - inventory_hostname == groups['kube-master'][0]
+  when: inventory_hostname == groups['kube-master'][0]
 
 - name: ChartMuseum | Copy chart to addon dir
   synchronize:
     src: chart/
     dest: "{{ kube_config_dir }}/addons/chartmuseum/"
+  when: inventory_hostname == groups['kube-master'][0]
 
 - name: ChartMuseum | Install helm chart
-  shell: "helm upgrade --install chartmuseum {{ kube_config_dir }}/addons/chartmuseum --reuse-values"
+  shell: "helm install {{ kube_config_dir }}/addons/chartmuseum --name chartmuseum"
+  ignore_errors: yes
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: ChartMuseum | Create helm push plugin dir
+  file:
+    path: "$HOME/.helm/plugins/helm-push"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: ChartMuseum | Copy chartmuseum helm push plugin to addon dir
+  unarchive:
+    src: "helm-push_0.7.1_linux_amd64.tar.gz"
+    dest: "$HOME/.helm/plugins/helm-push/"
+  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]

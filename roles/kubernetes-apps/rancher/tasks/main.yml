@@ -6,14 +6,15 @@
     owner: root
     group: root
     mode: 0755
-  when:
-    - inventory_hostname == groups['kube-master'][0]
+  when: inventory_hostname == groups['kube-master'][0]
 
 - name: Rancher | Copy chart to addon dir
   synchronize:
     src: chart/
     dest: "{{ kube_config_dir }}/addons/rancher/"
+  when: inventory_hostname == groups['kube-master'][0]
 
 - name: Rancher | Install helm chart
-  shell: "helm upgrade --install rancher {{ kube_config_dir }}/addons/rancher --namespace cattle-system --reuse-values"
+  shell: "helm install {{ kube_config_dir }}/addons/rancher --namespace cattle-system --name rancher"
+  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]

@@ -70,6 +70,10 @@ spec:
         - start
         - --config
         - /etc/config/config.json
+{% if airgap is defined and airgap == True|default(false) %}
+        - --helper-image
+        - {{kubernetes_docker_registry}}/busybox:latest
+{% endif %}
         volumeMounts:
         - name: config-volume
           mountPath: /etc/config/

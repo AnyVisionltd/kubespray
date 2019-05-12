@@ -54,7 +54,7 @@ deploy_bt(){
 function showhelp {
    echo ""
    echo "Usage examples:"
-   echo "Online: $0 --token < gcr.io token > --inventory inventory/local/hosts.ini"
+   echo "Online: $0 --inventory inventory/local/hosts.ini --token < gcr.io token > "
    echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/ --metallb-range '10.5.0.50-10.5.0.99'"
    echo ""
    echo "OPTIONS:"

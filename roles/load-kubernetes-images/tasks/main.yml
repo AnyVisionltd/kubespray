@@ -1,6 +1,6 @@
 - name: Check if {{ kubespray_images_archive }} exist
   stat:
-    path: "{{ docker_images_archive }}"
+    path: "{{ kubespray_images_archive }}"
   register: kubespray_images_archive_exist
 
 

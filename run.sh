@@ -33,7 +33,7 @@ get_kubernetes_repo(){
     echo "Login to gcr.io"
     docker login "https://gcr.io" --username "oauth2accesstoken" --password $tokenkey
     echo "Pulling kubernetes container repo: $tokenkey"
-    image_name=gcr.io/anyvision-training/kubernetes:master
+    image_name=gcr.io/anyvision-production/kubernetes:${kubernetes_version:-1.22.0.3}
     docker pull $image_name
     id=$(docker create $image_name)
     docker cp $id:/kubernetes /root/
@@ -101,6 +101,11 @@ while [[ $# -gt 0 ]]; do
 	metallb_vars="{'metallb':{'ip_range':'$1','limits':{'cpu':'100m','memory':'100Mi'},'port':'7472','version':'v0.7.3'}}"
 	shift
         continue
+        ;;
+        -v|--version|--version)
+        shift
+        kubernetes_version="$1"
+        shift
         ;;
         -k|token|--token)
         shift

@@ -116,14 +116,6 @@
     dest: "{{ yum_repo_dir }}/docker.repo"
   when: ansible_distribution in ["CentOS","RedHat"] and not is_atomic
 
-# - name: get if redhat os is workstation
-#   shell: cat /etc/redhat-release 
-#   register: get_os_version
-
-# - name: install container-selinux on RedHat workstation
-#   shell: yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.95-2.el7_6.noarch.rpm
-#   when: (get_os_version is defined) and (get_os_version.stdout.find('Workstation') != -1) and (ansible_distribution == "RedHat")
-
 - name: check if container-selinux is available
   yum:
     list: "container-selinux"

@@ -5,6 +5,9 @@ SCRIPT=$(readlink -f "$0")
 # Absolute path to the script directory
 BASEDIR=$(dirname "$SCRIPT")
 
+# packages location
+k8s_manifests_dir="/opt/kubernetes"
+
 DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 
 function valid_ip {
@@ -30,20 +33,22 @@ get_kubernetes_repo(){
         usage
         exit 1
     fi
-    echo "Login to gcr.io"
-    docker login "https://gcr.io" --username "oauth2accesstoken" --password $tokenkey
-    echo "Pulling kubernetes container repo: $tokenkey"
-    image_name=gcr.io/anyvision-production/kubernetes:${kubernetes_version:-1.22.0.3}
-    docker pull $image_name
-    id=$(docker create $image_name)
-    docker cp $id:/kubernetes /root/
-    docker rm -v $id
-    deploy_bt
-
+    if [ ! -d ${k8s_manifests_dir}/${kubernetes_version} ] ; then
+        echo "Login to gcr.io"
+        docker login "https://gcr.io" --username "oauth2accesstoken" --password $tokenkey
+        echo "Pulling kubernetes container repo: $tokenkey"
+        image_name=gcr.io/anyvision-production/kubernetes:${kubernetes_version:-1.22.0.3}
+        docker pull $image_name
+        id=$(docker create $image_name)
+        mkdir -p ${k8s_manifests_dir}/${kubernetes_version}
+        docker cp $id:/kubernetes ${k8s_manifests_dir}/${kubernetes_version}
+        docker rm -v $id
+        deploy_bt
+    fi
 }
 
 deploy_bt(){
-    cd /root/kubernetes/templates/
+    cd ${k8s_manifests_dir}/${kubernetes_version}/templates/
     ./deployer.sh -k  "$tokenkey"
     ./deployer.sh -b
 
@@ -210,7 +215,7 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_PIPELINING=True
 
 if [ ! $skip_kubespray == "true" ]; then
-    ansible-playbook -vv -i "$inventory" \
+    ansible-playbook -i "$inventory" \
       --become --become-user=root \
       -e "$airgap_bool" \
       -e repository_address="$repository_address" \
@@ -218,7 +223,7 @@ if [ ! $skip_kubespray == "true" ]; then
 fi
 
 if [ $metallb == "true" ]; then
-    ansible-playbook -vv -i "$inventory" \
+    ansible-playbook -i "$inventory" \
       --become --become-user=root \
       -e "$metallb_vars" \
       $BASEDIR/contrib/metallb/metallb.yml "$@"

@@ -22,11 +22,55 @@ function valid_ip {
     return $stat
 }
 
+get_kubernetes_repo(){
+    k8s_manifests_dir="/opt/kubernetes"    
+    kubernetes_ver=${kubernetes_version:-1.22.0.3}
+
+    #if kubernetes maniferst already exist
+    if [ -d ${k8s_manifests_dir}/${kubernetes_ver} ] ; then
+        echo "the kubernetes dir ${k8s_manifests_dir}/${kubernetes_ver} alreadi exist. skipping get kubernetes repo..."
+    elif [ $airgap == "true" ] ; then
+        echo "airgap mode is on. skipping get kubernetes repo..."
+    else #if kubernetes maniferst is not exist
+        # exit if not provided any token 
+        if [ -z "$tokenkey" ]; then
+            echo ""
+            echo "ERROR: Token is not specified."
+            showhelp
+            exit 1
+        fi
+        echo "Login to gcr.io"
+        docker login "https://gcr.io" --username "oauth2accesstoken" --password $tokenkey
+        echo "Pulling kubernetes container repo: $tokenkey"
+        image_name=gcr.io/${gcr_account:-anyvision-production}/kubernetes:${kubernetes_ver}
+        docker pull $image_name
+        id=$(docker create $image_name)
+        mkdir -p ${k8s_manifests_dir}/${kubernetes_ver}
+        docker cp $id:/kubernetes/. ${k8s_manifests_dir}/${kubernetes_ver}
+        docker rm -v $id
+        
+    fi
+
+    #deploy app
+    deploy_app
+}
+
+deploy_app(){
+    cd ${k8s_manifests_dir}/${kubernetes_ver}/templates/
+    if [ $airgap == "true" ] ; then
+        ./deployer.sh -b
+    else
+        ./deployer.sh -k "$tokenkey" -b
+    fi
+    
+}
+
+
 #arguments
 function showhelp {
    echo ""
    echo "Usage examples:"
-   echo "Online: $0 --inventory inventory/local/hosts.ini"
+   echo "Online: $0 --inventory inventory/local/hosts.ini --token < gcr.io token > "
    echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/ --metallb-range '10.5.0.50-10.5.0.99'"
    echo ""
    echo "OPTIONS:"
@@ -36,6 +80,8 @@ function showhelp {
    echo "  [-m|--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
    echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
+   echo "  [-k|--token] Provide a gcr.io registry token"
+   echo "  [-v|--version] Provide version for kubernetes repository"
    echo ""
 }
 
@@ -73,6 +119,16 @@ while [[ $# -gt 0 ]]; do
 	shift
         continue
         ;;
+        -v|--version|--version)
+        shift
+        kubernetes_version="$1"
+        shift
+        ;;
+        -k|token|--token)
+        shift
+        tokenkey="$1"
+        shift
+        ;;
         --skip-kubespray)
         shift
         skip_kubespray="true"
@@ -93,7 +149,7 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-if [ -z "$inventory" ]; then
+if [ -z "$inventory" ] && [ ! $skip_kubespray == "true" ]; then
    echo ""
    echo "ERROR: Inventory file is not specified"
    showhelp
@@ -102,7 +158,7 @@ fi
 
 if [ -z "$repository_address" ] && [ $airgap == "true" ]; then
     if valid_ip $DEFAULT_IPV4; then
-        repository_address="http://$DEFAULT_IPV4:8080/"
+        repository_address="http://$DEFAULT_IPV4:8085/"
     else
         echo ""
         echo "ERROR: Unable to retrieve a valid default ipv4 address, please specify the APT repository address manually using the --repository option"
@@ -125,6 +181,18 @@ if [ -x "$(command -v apt-get)" ]; then
 	    set +e
 	fi
 elif [ -x "$(command -v yum)" ]; then
+    
+    #curl -O https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    #rpm -i --force ./epel-release-latest-7.noarch.rpm
+    #grep -q  'Workstation' /etc/redhat-release
+    #if [ $? -eq 0 ] ; then
+    #   if ! rpm --quiet --query container-selinux; then
+    #      sudo rpm -ihv http://ftp.riken.jp/Linux/cern/centos/7/extras/x86_64/Packages/container-selinux-2.9-4.el7.noarch.rpm
+    #   fi
+    #fi
+    yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    sudo yum install -y python-pip git yum pciutils ansible
+
 	for package in \
 		python \
 		python-pip \
@@ -160,16 +228,21 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_PIPELINING=True
 
 if [ ! $skip_kubespray == "true" ]; then
-    ansible-playbook -vv -i "$inventory" \
+    ansible-playbook -i "$inventory" \
       --become --become-user=root \
       -e "$airgap_bool" \
       -e repository_address="$repository_address" \
-      $BASEDIR/cluster.yml "$@"
+      $BASEDIR/cluster.yml -vv "$@"
 fi
 
 if [ $metallb == "true" ]; then
-    ansible-playbook -vv -i "$inventory" \
+    ansible-playbook -i "$inventory" \
       --become --become-user=root \
       -e "$metallb_vars" \
-      $BASEDIR/contrib/metallb/metallb.yml "$@"
+      $BASEDIR/contrib/metallb/metallb.yml -vv "$@"
 fi
+
+# Get kubernetes repo and deploy BT
+
+get_kubernetes_repo
+

@@ -4,7 +4,7 @@
     name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     state: present
 
-- name: Install cuda-repo-rhel7
+- name: Install cuda-repo-rhel7 yum repo
   yum:
     name: "{{nvidia_cuda_repo}}/{{short_name_redhat}}{{ansible_distribution_major_version}}/{{ansible_architecture}}/cuda-repo-{{short_name_redhat}}{{ansible_distribution_major_version}}-{{cuda_version}}.{{ansible_architecture}}.rpm"
     state: present
@@ -19,21 +19,21 @@
   register: get_os_version
 
 
-- name: install cuda-driver server on Redhat
+- name: add yum repo rhel-7-server-optional-rpms on Redhat server
   shell: subscription-manager repos --enable=rhel-7-server-optional-rpms 
   when: (get_os_version is defined) and (get_os_version.stdout.find('Workstation') == -1) and (ansible_distribution == "RedHat")
 
-- name: install cuda-driver workstation on Redhat
+- name: add yum repo rhel-7-workstation-optional-rpms on Redhat workstation
   shell: subscription-manager repos --enable=rhel-7-workstation-optional-rpms
   when: (get_os_version is defined) and (get_os_version.stdout.find('Workstation') != -1) and (ansible_distribution == "RedHat")
 
 
-- name: install cuda-driver workstation on Redhat
+- name: install prerequisites packages for cuda-driver on Redhat workstation
   shell: yum -y install kernel-devel-$(uname -r) kernel-header-$(uname -r) gcc make dkms epel-release
   when: (get_os_version is defined) and (get_os_version.stdout.find('Workstation') != -1) and (ansible_distribution == "RedHat")
 
 
-- name: install cuda-driver server
+- name: install cuda-driver
   yum:
     name: cuda-driver
     state: present

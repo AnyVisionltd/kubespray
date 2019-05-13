@@ -70,7 +70,7 @@ spec:
         - start
         - --config
         - /etc/config/config.json
-{% if airgap is defined and airgap == True|default(false) %}
+{% if local_path_provisioner_helper_image|default(false) %}
         - --helper-image
         - {{kubernetes_docker_registry}}/busybox:latest
 {% endif %}

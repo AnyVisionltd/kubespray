@@ -142,7 +142,7 @@ fi
 
 if [ -z "$repository_address" ] && [ $airgap == "true" ]; then
     if valid_ip $DEFAULT_IPV4; then
-        repository_address="http://$DEFAULT_IPV4:8080/"
+        repository_address="http://$DEFAULT_IPV4:8085/"
     else
         echo ""
         echo "ERROR: Unable to retrieve a valid default ipv4 address, please specify the APT repository address manually using the --repository option"
@@ -167,12 +167,12 @@ if [ -x "$(command -v apt-get)" ]; then
 elif [ -x "$(command -v yum)" ]; then
     curl -O https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     rpm -i --force ./epel-release-latest-7.noarch.rpm
-    grep -q  'Workstation' /etc/redhat-release
-    if [ $? -eq 0 ] ; then
-       if ! rpm --quiet --query container-selinux; then
-          sudo rpm -ihv http://ftp.riken.jp/Linux/cern/centos/7/extras/x86_64/Packages/container-selinux-2.9-4.el7.noarch.rpm
-       fi
-    fi
+    #grep -q  'Workstation' /etc/redhat-release
+    #if [ $? -eq 0 ] ; then
+    #   if ! rpm --quiet --query container-selinux; then
+    #      sudo rpm -ihv http://ftp.riken.jp/Linux/cern/centos/7/extras/x86_64/Packages/container-selinux-2.9-4.el7.noarch.rpm
+    #   fi
+    #fi
     sudo yum install -y python-pip git yum pciutils ansible
 
 	for package in \

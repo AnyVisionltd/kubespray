@@ -5,9 +5,6 @@ SCRIPT=$(readlink -f "$0")
 # Absolute path to the script directory
 BASEDIR=$(dirname "$SCRIPT")
 
-# packages location
-k8s_manifests_dir="/opt/kubernetes"
-
 DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 
 function valid_ip {
@@ -25,33 +22,47 @@ function valid_ip {
     return $stat
 }
 
-
 get_kubernetes_repo(){
-    if [ -z "$tokenkey" ]; then
-        echo ""
-        echo "ERROR: Token is not specified."
-        usage
-        exit 1
-    fi
-    if [ ! -d ${k8s_manifests_dir}/${kubernetes_version} ] ; then
+    k8s_manifests_dir="/opt/kubernetes"    
+    kubernetes_ver=${kubernetes_version:-1.22.0.3}
+
+    #if kubernetes maniferst already exist
+    if [ -d ${k8s_manifests_dir}/${kubernetes_ver} ] ; then
+        echo "the kubernetes dir ${k8s_manifests_dir}/${kubernetes_ver} alreadi exist. skipping get kubernetes repo..."
+    elif [ $airgap == "true" ] ; then
+        echo "airgap mode is on. skipping get kubernetes repo..."
+    else #if kubernetes maniferst is not exist
+        # exit if not provided any token 
+        if [ -z "$tokenkey" ]; then
+            echo ""
+            echo "ERROR: Token is not specified."
+            showhelp
+            exit 1
+        fi
         echo "Login to gcr.io"
         docker login "https://gcr.io" --username "oauth2accesstoken" --password $tokenkey
         echo "Pulling kubernetes container repo: $tokenkey"
-        image_name=gcr.io/anyvision-production/kubernetes:${kubernetes_version:-1.22.0.3}
+        image_name=gcr.io/${gcr_account:-anyvision-production}/kubernetes:${kubernetes_ver}
         docker pull $image_name
         id=$(docker create $image_name)
-        mkdir -p ${k8s_manifests_dir}/${kubernetes_version}
-        docker cp $id:/kubernetes ${k8s_manifests_dir}/${kubernetes_version}
+        mkdir -p ${k8s_manifests_dir}/${kubernetes_ver}
+        docker cp $id:/kubernetes/. ${k8s_manifests_dir}/${kubernetes_ver}
         docker rm -v $id
-        deploy_bt
+        
     fi
+
+    #deploy app
+    deploy_app
 }
 
-deploy_bt(){
-    cd ${k8s_manifests_dir}/${kubernetes_version}/templates/
-    ./deployer.sh -k  "$tokenkey"
-    ./deployer.sh -b
-
+deploy_app(){
+    cd ${k8s_manifests_dir}/${kubernetes_ver}/templates/
+    if [ $airgap == "true" ] ; then
+        ./deployer.sh -b
+    else
+        ./deployer.sh -k "$tokenkey" -b
+    fi
+    
 }
 
 
@@ -138,7 +149,7 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-if [ -z "$inventory" ]; then
+if [ -z "$inventory" ] && [ ! $skip_kubespray == "true" ]; then
    echo ""
    echo "ERROR: Inventory file is not specified"
    showhelp
@@ -170,14 +181,16 @@ if [ -x "$(command -v apt-get)" ]; then
 	    set +e
 	fi
 elif [ -x "$(command -v yum)" ]; then
-    curl -O https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-    rpm -i --force ./epel-release-latest-7.noarch.rpm
+    
+    #curl -O https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    #rpm -i --force ./epel-release-latest-7.noarch.rpm
     #grep -q  'Workstation' /etc/redhat-release
     #if [ $? -eq 0 ] ; then
     #   if ! rpm --quiet --query container-selinux; then
     #      sudo rpm -ihv http://ftp.riken.jp/Linux/cern/centos/7/extras/x86_64/Packages/container-selinux-2.9-4.el7.noarch.rpm
     #   fi
     #fi
+    yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     sudo yum install -y python-pip git yum pciutils ansible
 
 	for package in \
@@ -219,16 +232,17 @@ if [ ! $skip_kubespray == "true" ]; then
       --become --become-user=root \
       -e "$airgap_bool" \
       -e repository_address="$repository_address" \
-      $BASEDIR/cluster.yml "$@"
+      $BASEDIR/cluster.yml -vv "$@"
 fi
 
 if [ $metallb == "true" ]; then
     ansible-playbook -i "$inventory" \
       --become --become-user=root \
       -e "$metallb_vars" \
-      $BASEDIR/contrib/metallb/metallb.yml "$@"
+      $BASEDIR/contrib/metallb/metallb.yml -vv "$@"
 fi
 
 # Get kubernetes repo and deploy BT
+
 get_kubernetes_repo
 

@@ -54,7 +54,7 @@
   pre_tasks:
     - name: gather facts from all instances
       setup:
-      delegate_to: "{{item}}"
+      delegate_to: "{{ item }}"
       delegate_facts: true
       with_items: "{{ groups['k8s-cluster'] + groups['etcd'] + groups['calico-rr']|default([]) }}"
       run_once: true
@@ -71,7 +71,7 @@
     - { role: "container-engine", tags: "container-engine", when: deploy_container_engine|default(true) }
     - { role: load-kubernetes-images, tags: load-kubernetes-images, when: "airgap is defined and airgap == True", delegate_to: 127.0.0.1 }
     - { role: download, tags: download, when: "not skip_downloads" }
-  environment: "{{proxy_env}}"
+  environment: "{{ proxy_env }}"
 
 - hosts: etcd
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
@@ -95,7 +95,7 @@
     - { role: nvidia-driver, become: yes, tags: ["nvidia-driver"] }
     - { role: nvidia-docker, become: yes, tags: ["nvidia-docker"] }
     - { role: docker-settings, become: yes , tags: ["docker-settings"] }
-  environment: "{{proxy_env}}"
+  environment: "{{ proxy_env }}"
 
 - hosts: kube-master
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"

@@ -29,7 +29,7 @@ download_always_pull: False
 download_validate_certs: True
 
 # Use the first kube-master if download_localhost is not set
-download_delegate: "{% if download_localhost %}localhost{% else %}{{groups['kube-master'][0]}}{% endif %}"
+download_delegate: "{% if download_localhost %}localhost{% else %}{{ groups['kube-master'][0] }}{% endif %}"
 
 # Arch of Docker images and needed packages
 image_arch: "{{host_architecture | default('amd64')}}"
@@ -258,7 +258,7 @@ rbd_provisioner_image_tag: "v2.1.1-k8s1.11"
 local_path_provisioner_image_repo: "docker.io/rancher/local-path-provisioner"
 local_path_provisioner_image_tag: "v0.0.7"
 ingress_nginx_controller_image_repo: "quay.io/kubernetes-ingress-controller/nginx-ingress-controller"
-ingress_nginx_controller_image_tag: "0.24.0"
+ingress_nginx_controller_image_tag: "0.24.1"
 cert_manager_version: "v0.5.2"
 cert_manager_controller_image_repo: "quay.io/jetstack/cert-manager-controller"
 cert_manager_controller_image_tag: "{{ cert_manager_version }}"

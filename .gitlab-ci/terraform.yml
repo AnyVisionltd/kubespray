@@ -4,44 +4,45 @@
   extends: .job
   before_script:
     - ./tests/scripts/rebase.sh
+    - ./tests/scripts/testcases_prepare.sh
+    - ./tests/scripts/terraform_install.sh
     # Set Ansible config
     - cp ansible.cfg ~/.ansible.cfg
-    # Install Terraform
-    - apt-get install -y unzip
-    - curl https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip > /tmp/terraform.zip
-    - unzip /tmp/terraform.zip && mv ./terraform /usr/local/bin/ && terraform --version
     # Prepare inventory
-    - cp -LRp contrib/terraform/$PROVIDER/sample-inventory inventory/$CLUSTER
-    - cd inventory/$CLUSTER
-    - ln -s ../../contrib/terraform/$PROVIDER/hosts
-    - terraform init ../../contrib/terraform/$PROVIDER
+    - cp contrib/terraform/$PROVIDER/sample-inventory/cluster.tf .
+    - ln -s contrib/terraform/$PROVIDER/hosts
+    - terraform init contrib/terraform/$PROVIDER
     # Copy SSH keypair
     - mkdir -p ~/.ssh
     - echo "$PACKET_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
     - chmod 400 ~/.ssh/id_rsa
     - echo "$PACKET_PUBLIC_KEY" | base64 -d > ~/.ssh/id_rsa.pub
-  only: ['master', /^pr-.*$/]
 
 .terraform_validate:
   extends: .terraform_install
   stage: unit-tests
+  only: ['master', /^pr-.*$/]
   script:
-    - terraform validate -var-file=cluster.tf ../../contrib/terraform/$PROVIDER
-    - terraform fmt -check -diff ../../contrib/terraform/$PROVIDER
+    - terraform validate -var-file=cluster.tf contrib/terraform/$PROVIDER
+    - terraform fmt -check -diff contrib/terraform/$PROVIDER
 
 .terraform_apply:
   extends: .terraform_install
   stage: deploy-part2
   when: manual
+  only: [/^pr-.*$/]
   variables:
     ANSIBLE_INVENTORY_UNPARSED_FAILED: "true"
+    ANSIBLE_INVENTORY: hosts
+    CI_PLATFORM: tf
   script:
-    - terraform apply -auto-approve ../../contrib/terraform/$PROVIDER
-    - ansible-playbook -i hosts ../../cluster.yml --become
+    - cd tests && make create-${CI_PLATFORM} -s ; cd -
+    - ansible-playbook tests/cloud_playbooks/wait-for-ssh.yml
+    - ansible-playbook cluster.yml --become
+    # - tests/scripts/testcases_prepare.sh
   after_script:
     # Cleanup regardless of exit code
-    - cd inventory/$CLUSTER
-    - terraform destroy -auto-approve ../../contrib/terraform/$PROVIDER
+    - ./tests/scripts/testcases_cleanup.sh
 
 tf-validate-openstack:
   extends: .terraform_validate
@@ -107,6 +108,7 @@ tf-packet-ubuntu18-default:
 
 tf-apply-ovh:
   extends: .terraform_apply
+  when: on_success
   variables:
     <<: *ovh_variables
     TF_VERSION: 0.11.11

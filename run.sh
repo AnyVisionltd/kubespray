@@ -78,7 +78,7 @@ function showhelp {
    echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
    echo "  [-a|--airgap] Airgap installation mode (default: false)"
    echo "  [-m|--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
-   echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
+   echo "  [-s]--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
    echo "  [-k|--token] Provide a gcr.io registry token"
    echo "  [-v|--version] Provide version for kubernetes repository"
@@ -129,7 +129,7 @@ while [[ $# -gt 0 ]]; do
         tokenkey="$1"
         shift
         ;;
-        --skip-kubespray)
+        -s|skip-kubespray|--skip-kubespray)
         shift
         skip_kubespray="true"
         continue
@@ -152,6 +152,12 @@ fi
 if [ -z "$inventory" ] && [ ! $skip_kubespray == "true" ]; then
    echo ""
    echo "ERROR: Inventory file is not specified"
+   showhelp
+   exit 1
+fi
+
+if [ -n "$inventory" ] && [ -z "$tokenkey" ] && [ "$airgap" == "false" ]; then
+   echo "ERROR: Token file is not specified"
    showhelp
    exit 1
 fi

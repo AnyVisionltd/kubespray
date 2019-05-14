@@ -26,9 +26,9 @@ get_kubernetes_repo(){
     k8s_manifests_dir="/opt/kubernetes"    
     kubernetes_ver=${kubernetes_version:-1.22.0.3}
 
-    #if kubernetes maniferst already exist
-    if [ -d ${k8s_manifests_dir}/${kubernetes_ver} ] ; then
-        echo "the kubernetes dir ${k8s_manifests_dir}/${kubernetes_ver} alreadi exist. skipping get kubernetes repo..."
+    #if kubernetes maniferst already exist and not empty dir
+    if [ -d ${k8s_manifests_dir}/${kubernetes_ver} ] && [ "$(ls -A ${k8s_manifests_dir}/${kubernetes_ver})" ] ; then
+        echo "the kubernetes dir ${k8s_manifests_dir}/${kubernetes_ver} is already exist. skipping get kubernetes repo..."
     elif [ $airgap == "true" ] ; then
         echo "airgap mode is on. skipping get kubernetes repo..."
     else #if kubernetes maniferst is not exist
@@ -39,25 +39,26 @@ get_kubernetes_repo(){
             showhelp
             exit 1
         elif [[ $tokenkey != "" ]] && [[ $tokenkey == *".json" ]] && [[ -f $tokenkey ]] ;then
-            echo "detected $tokenkey is json key file"
+            echo "detected gcr json key file: $tokenkey"
             gcr_user="_json_key" 
             gcr_key="$(cat ~/.gcr/docker-registry-read-only.json | tr '\n' ' ')"
         elif  [[ $tokenkey != "" ]] && [[ ! -f $tokenkey ]] && [[ $tokenkey != *".json" ]]; then
-            echo "detected $tokenkey is gcr token"
+            echo "detected gcr token: $tokenkey"
             gcr_user="oauth2accesstoken"
             gcr_key=$tokenkey
         fi
 
-        echo "Login to gcr.io"
-        docker login "https://gcr.io" --username ${gcr_user} --password ${gcr_key}
+        echo "Login to gcr.io"       
+        docker login "https://gcr.io" --username "${gcr_user}" --password "${gcr_key}"
         image_name=gcr.io/${gcr_account:-anyvision-production}/kubernetes:${kubernetes_ver}
         echo "Pulling kubernetes container repo: ${image_name}"
+        set -e
         docker pull $image_name
         id=$(docker create $image_name)
         mkdir -p ${k8s_manifests_dir}/${kubernetes_ver}
         docker cp $id:/kubernetes/. ${k8s_manifests_dir}/${kubernetes_ver}
         docker rm -v $id
-        
+        set +e
     fi
 
     #deploy app
@@ -66,11 +67,12 @@ get_kubernetes_repo(){
 
 deploy_app(){
 
+    echo "deploy app"
     cd ${k8s_manifests_dir}/${kubernetes_ver}/templates/
     if [ $airgap == "true" ] ; then
         ./deployer.sh -b
     else
-        ./deployer.sh -k "$tokenkey" -b
+        ./deployer.sh -k "${tokenkey}" -b
     fi
 }
 
@@ -90,7 +92,7 @@ function showhelp {
    echo "  [--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
    echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
-   echo "  [--key] Provide a gcr.io registry token key (string) or json key file (json file path)"
+   echo "  [-k|--key] Provide a gcr.io registry token key (string) or json key file (json file path)"
    echo "  [--skip-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
    echo "  [-v|--version] Provide version for kubernetes repository"
    echo ""
@@ -101,6 +103,7 @@ airgap="false"
 airgap_bool='{airgap: False}'
 metallb="false"
 skip_kubespray="false"
+skip_kubernetes_manifest="false"
 
 ## Deploy
 POSITIONAL=()
@@ -134,11 +137,13 @@ while [[ $# -gt 0 ]]; do
         shift
         kubernetes_version="$1"
         shift
+        continue
         ;;
-        key|--key)
+        -k|key|--key)
         shift
         tokenkey="$1"
         shift
+        continue
         ;;
         skip-kubespray|--skip-kubespray)
         shift
@@ -165,15 +170,15 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-if [ -z "$inventory" ] && [ ! $skip_kubespray == "true" ]; then
+if [ -z "$inventory" ] && [ ! $skip_kubespray == "true" ] &&  [ $metallb == "true" ]; then
    echo ""
    echo "ERROR: Inventory file is not specified"
    showhelp
    exit 1
 fi
 
-if [ -n "$inventory" ] && [ -z "$tokenkey" ] && [ "$airgap" == "false" ]; then
-   echo "ERROR: Token file is not specified"
+if [ $skip_kubernetes_manifest == "false" ] && [ -z "$tokenkey" ] && [ "$airgap" == "false" ]; then
+   echo "ERROR: GCR key is not specified"
    showhelp
    exit 1
 fi
@@ -255,9 +260,12 @@ if [ ! $skip_kubespray == "true" ]; then
       -e "$airgap_bool" \
       -e repository_address="$repository_address" \
       $BASEDIR/cluster.yml -vv "$@"
+else
+    echo "skip kubespray"
 fi
 
 if [ $metallb == "true" ]; then
+    echo "deploy metallb"
     ansible-playbook -i "$inventory" \
       --become --become-user=root \
       -e "$metallb_vars" \
@@ -265,7 +273,9 @@ if [ $metallb == "true" ]; then
 fi
 
 # Get kubernetes repo and deploy BT
-if [ $skip_kubernetes_manifest == "false" ];then
+if [ $skip_kubernetes_manifest == "false" ]; then
     get_kubernetes_repo
+else
+    echo "skip get kubernetes manifests"
 fi
 

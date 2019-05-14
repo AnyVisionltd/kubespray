@@ -38,11 +38,20 @@ get_kubernetes_repo(){
             echo "ERROR: Token is not specified."
             showhelp
             exit 1
+        elif [[ $tokenkey != "" ]] && [[ $tokenkey == *".json" ]] && [[ -f $tokenkey ]] ;then
+            echo "detected $tokenkey is json key file"
+            gcr_user="_json_key" 
+            gcr_key="$(cat ~/.gcr/docker-registry-read-only.json | tr '\n' ' ')"
+        elif  [[ $tokenkey != "" ]] && [[ ! -f $tokenkey ]] && [[ $tokenkey != *".json" ]]; then
+            echo "detected $tokenkey is gcr token"
+            gcr_user="oauth2accesstoken"
+            gcr_key=$tokenkey
         fi
+
         echo "Login to gcr.io"
-        docker login "https://gcr.io" --username "oauth2accesstoken" --password $tokenkey
-        echo "Pulling kubernetes container repo: $tokenkey"
+        docker login "https://gcr.io" --username ${gcr_user} --password ${gcr_key}
         image_name=gcr.io/${gcr_account:-anyvision-production}/kubernetes:${kubernetes_ver}
+        echo "Pulling kubernetes container repo: ${image_name}"
         docker pull $image_name
         id=$(docker create $image_name)
         mkdir -p ${k8s_manifests_dir}/${kubernetes_ver}
@@ -56,13 +65,13 @@ get_kubernetes_repo(){
 }
 
 deploy_app(){
+
     cd ${k8s_manifests_dir}/${kubernetes_ver}/templates/
     if [ $airgap == "true" ] ; then
         ./deployer.sh -b
     else
         ./deployer.sh -k "$tokenkey" -b
     fi
-    
 }
 
 
@@ -78,10 +87,11 @@ function showhelp {
    echo "  [-i|--inventory path] Ansible inventory file path (required)"
    echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
    echo "  [-a|--airgap] Airgap installation mode (default: false)"
-   echo "  [-m|--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
-   echo "  [-s]--skip-kubespray] Skip Kubespray playbook (default: false)"
+   echo "  [--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
+   echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
-   echo "  [-k|--token] Provide a gcr.io registry token"
+   echo "  [--key] Provide a gcr.io registry token key (string) or json key file (json file path)"
+   echo "  [--skip-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
    echo "  [-v|--version] Provide version for kubernetes repository"
    echo ""
 }
@@ -116,8 +126,8 @@ while [[ $# -gt 0 ]]; do
         -m|--metallb-range)
         shift
         metallb="true"
-	metallb_vars="{'metallb':{'ip_range':'$1','limits':{'cpu':'100m','memory':'100Mi'},'port':'7472','version':'v0.7.3'}}"
-	shift
+        metallb_vars="{'metallb':{'ip_range':'$1','limits':{'cpu':'100m','memory':'100Mi'},'port':'7472','version':'v0.7.3'}}"
+        shift
         continue
         ;;
         -v|--version|--version)
@@ -125,16 +135,21 @@ while [[ $# -gt 0 ]]; do
         kubernetes_version="$1"
         shift
         ;;
-        -k|token|--token)
+        key|--key)
         shift
         tokenkey="$1"
         shift
         ;;
-        -s|skip-kubespray|--skip-kubespray)
+        skip-kubespray|--skip-kubespray)
         shift
         skip_kubespray="true"
         continue
         ;;
+        skip-kubernetes-manifest|--skip-kubernetes-manifest)
+        shift
+        skip_kubernetes_manifest="true"
+        continue
+        ;;        
         -i|--inventory)
         shift
         inventory="$1"
@@ -250,6 +265,7 @@ if [ $metallb == "true" ]; then
 fi
 
 # Get kubernetes repo and deploy BT
-
-get_kubernetes_repo
+if [ $skip_kubernetes_manifest == "false" ];then
+    get_kubernetes_repo
+fi
 

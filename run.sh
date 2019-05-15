@@ -41,7 +41,7 @@ get_kubernetes_repo(){
         elif [[ $tokenkey != "" ]] && [[ $tokenkey == *".json" ]] && [[ -f $tokenkey ]] ;then
             echo "detected gcr json key file: $tokenkey"
             gcr_user="_json_key" 
-            gcr_key="$(cat ~/.gcr/docker-registry-read-only.json | tr '\n' ' ')"
+            gcr_key="$(cat ${tokenkey} | tr '\n' ' ')"
         elif  [[ $tokenkey != "" ]] && [[ ! -f $tokenkey ]] && [[ $tokenkey != *".json" ]]; then
             echo "detected gcr token: $tokenkey"
             gcr_user="oauth2accesstoken"

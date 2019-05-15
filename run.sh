@@ -217,7 +217,7 @@ elif [ -x "$(command -v yum)" ]; then
     #      sudo rpm -ihv http://ftp.riken.jp/Linux/cern/centos/7/extras/x86_64/Packages/container-selinux-2.9-4.el7.noarch.rpm
     #   fi
     #fi
-    yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     sudo yum install -y python-pip git yum pciutils ansible
 
 	for package in \

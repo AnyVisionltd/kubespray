@@ -81,8 +81,8 @@ deploy_app(){
 function showhelp {
    echo ""
    echo "Usage examples:"
-   echo "Online: $0 --inventory inventory/local/hosts.ini --token < gcr.io token > "
-   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8085/ --metallb-range '10.5.0.50-10.5.0.99'"
+   echo "Online: $0 --inventory inventory/local/hosts.ini --key < gcr.io token (string) or json key file path > "
+   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8085/"
    echo "Metallb: $0 --inventory inventory/local/hosts.ini --metallb-range '10.5.0.50-10.5.0.99'"
    echo ""
    echo "OPTIONS:"
@@ -94,7 +94,7 @@ function showhelp {
    echo "  [-h|--help] Display this usage message"
    echo "  [-k|--key] Provide a gcr.io registry token key (string) or json key file (json file path)"
    echo "  [--skip-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
-   echo "  [-v|--version] Provide version for kubernetes repository"
+   echo "  [-v|--version] Provide version for kubernetes manifests repository"
    echo ""
 }
 

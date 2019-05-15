@@ -23,7 +23,7 @@
   gather_facts: true
   vars:
     airgap: False
-  pre_tasks:
+  pre_tasks: 
     - debug:
         var: airgap
     - fail:
@@ -38,6 +38,9 @@
     - name: 'install local repository'
       raw: echo "deb [arch=amd64 trusted=yes allow-insecure=yes] {{repository_address}} bionic main" > /etc/apt/sources.list
       when: airgap is defined and airgap == True
+    - name: 'install prerequisites packages'
+      raw: if [ -x "$(command -v apt)" ]; then apt update && apt install -y python-minimal; fi
+      ignore_errors: true
 
 - hosts: k8s-cluster:etcd:calico-rr
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"

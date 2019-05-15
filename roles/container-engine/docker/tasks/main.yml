@@ -108,13 +108,17 @@
   template:
     src: "fedora_docker.repo.j2"
     dest: "{{ yum_repo_dir }}/docker.repo"
-  when: ansible_distribution == "Fedora" and not is_atomic
+  when: 
+    - ansible_distribution == "Fedora" and not is_atomic
+    - airgap is undefined or airgap == False
 
 - name: Configure docker repository on RedHat/CentOS
   template:
     src: "rh_docker.repo.j2"
     dest: "{{ yum_repo_dir }}/docker.repo"
-  when: ansible_distribution in ["CentOS","RedHat"] and not is_atomic
+  when: 
+    - ansible_distribution in ["CentOS","RedHat"] and not is_atomic
+    - airgap is undefined or airgap == False
 
 - name: check if container-selinux is available
   yum:
@@ -204,7 +208,9 @@
     dest: "/etc/apt/preferences.d/docker"
     owner: "root"
     mode: 0644
-  when: not (ansible_os_family in ["CoreOS", "Container Linux by CoreOS", "ClearLinux", "RedHat", "Suse"] or is_atomic)
+  when: 
+    - not (ansible_os_family in ["CoreOS", "Container Linux by CoreOS", "ClearLinux", "RedHat", "Suse"] or is_atomic)
+    - airgap is undefined or airgap == False
 
 - name: ensure docker started, remove our config if docker start failed and try again
   block:

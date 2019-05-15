@@ -1,2 +1,10 @@
+- name: Check if {{ kubespray_images_archive }} exist
+  stat:
+    path: "{{ kubespray_images_archive }}"
+  register: kubespray_images_archive_exist
+
+
+
 - name: load kubernetes images
   shell: "{{playbook_dir}}/scripts/load-images.sh --images {{ kubespray_images_archive }}"
+  when: kubespray_images_archive_exist.stat.exists == True

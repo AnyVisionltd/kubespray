@@ -40,7 +40,9 @@
 
 - name: container_download | download images for kubeadm config images
   command: "{{ bin_dir }}/kubeadm config images pull --config={{ kube_config_dir }}/kubeadm-images.yaml"
-  when: not download_run_once
+  when: 
+    - not download_run_once
+    - airgap is undefined or airgap == False
 
 - name: container_download | fetch list of kubeadm config images
   command: "{{ bin_dir }}/kubeadm config images list --config={{ kube_config_dir }}/kubeadm-images.yaml"

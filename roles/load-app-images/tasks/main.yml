@@ -1,0 +1,9 @@
+- name: Check if {{ docker_images_archive }} exist
+  stat:
+    path: "{{ docker_images_archive }}"
+  register: docker_images_archive_exist
+
+
+- name: load app images
+  shell: "{{playbook_dir}}/scripts/load-images.sh --images {{ docker_images_archive }} --registry {{ kubernetes_docker_registry }}"
+  when: docker_images_archive_exist.stat.exists == True

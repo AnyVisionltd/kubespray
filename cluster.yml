@@ -20,7 +20,7 @@
     - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
 
 - hosts: all
-  gather_facts: false
+  gather_facts: true
   vars:
     airgap: False
   pre_tasks:
@@ -29,6 +29,9 @@
     - fail:
         msg: 'Variable {{repository_address}} is not defined while airgap mode is requested, either manually define {{repository_address}} or disable airgap mode'
       when: (airgap is defined and airgap == True) and repository_address is not defined
+    - fail:
+        msg: "{{inventory_hostname}} has not valid ip"
+      when: (hostvars[inventory_hostname]['ansible_default_ipv4']['address'] is not defined) or hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] is not defined
     - name: 'clear all original repositories'
       raw: if [ -f /etc/apt/sources.list ]; then cp -n /etc/apt/sources.list /etc/apt/sources.list.original; fi
       when: airgap is defined and airgap == True
@@ -136,8 +139,8 @@
   roles:
     - { role: kubespray-defaults }
     - { role: kubernetes-apps, tags: apps }
-    - { role: load-bt-images, tags: load-bt-images, when: "registry_enabled and airgap is defined and airgap == True" }
-  environment: "{{ proxy_env }}"
+    - { role: load-app-images, tags: load-app-images, when: "registry_enabled and airgap is defined and airgap == True" }
+  environment: "{{proxy_env}}"
 
 - hosts: k8s-cluster
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"

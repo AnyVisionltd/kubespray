@@ -15,7 +15,7 @@
   when: inventory_hostname == groups['kube-master'][0]
 
 - name: ChartMuseum | Install helm chart
-  shell: "helm install {{ kube_config_dir }}/addons/chartmuseum --name chartmuseum"
+  shell: "helm install {{ kube_config_dir }}/addons/chartmuseum --name chartmuseum --wait --timeout 90"
   ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
@@ -32,5 +32,13 @@
   unarchive:
     src: "helm-push_0.7.1_linux_amd64.tar.gz"
     dest: "$HOME/.helm/plugins/helm-push/"
+  ignore_errors: yes
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: ChartMuseum | Add chartmuseum repo to helm
+  shell: |
+    export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services chartmuseum)
+    export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+    helm repo add chartmuseum http://$NODE_IP:$NODE_PORT/
   ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]

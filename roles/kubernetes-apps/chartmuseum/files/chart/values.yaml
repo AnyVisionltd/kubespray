@@ -129,11 +129,11 @@ replica:
   #   iam.amazonaws.com/role: role-arn
 service:
   servicename: "chartmuseum"
-  type: ClusterIP
+  type: NodePort
   externalTrafficPolicy: Local
   # clusterIP: None
   externalPort: 8080
-  nodePort:
+  nodePort: 31000
   annotations: {}
   labels: {}
 

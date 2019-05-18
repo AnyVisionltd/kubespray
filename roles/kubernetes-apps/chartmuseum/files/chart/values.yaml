@@ -71,7 +71,7 @@ env:
     # allow chart versions to be re-uploaded
     ALLOW_OVERWRITE: true
     # absolute url for .tgzs in index.yaml
-    CHART_URL:
+    CHART_URL: "http://chartmuseum.default.svc:8080/"
     # allow anonymous GET operations when auth is used
     AUTH_ANONYMOUS_GET: false
     # sets the base context path

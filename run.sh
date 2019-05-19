@@ -247,8 +247,8 @@ fi
 
 # install ansible
 set -e
-pip install --quiet --no-index --find-links ./pip_deps/ setuptools
-pip install --quiet --no-index --find-links ./pip_deps/ -r requirements.txt
+pip install --quiet --no-index --find-links $BASEDIR/pip_deps/ setuptools
+pip install --quiet --no-index --find-links $BASEDIR/pip_deps/ -r $BASEDIR/requirements.txt
 set +e
 
 if [ $airgap == "true" ]; then

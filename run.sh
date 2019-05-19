@@ -47,7 +47,7 @@ function valid_ip {
 
 get_kubernetes_repo(){
     k8s_manifests_dir="/opt/kubernetes"    
-    kubernetes_ver=${kubernetes_version:-1.22.0.3}
+    kubernetes_ver=${kubernetes_version:-1.22.0}
 
     #if kubernetes maniferst already exist and not empty dir
     if [ -d ${k8s_manifests_dir}/${kubernetes_ver} ] && [ "$(ls -A ${k8s_manifests_dir}/${kubernetes_ver})" ] ; then

@@ -7,6 +7,29 @@ BASEDIR=$(dirname "$SCRIPT")
 
 DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 
+#arguments
+function showhelp {
+   echo ""
+   echo "Usage examples:"
+   echo "Online: $0 --inventory inventory/local/hosts.ini --key < gcr.io token (string) or json key file path > "
+   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8085/"
+   echo "Metallb: $0 --inventory inventory/local/hosts.ini --metallb-range '10.5.0.50-10.5.0.99'"
+   echo ""
+   echo "OPTIONS:"
+   echo "  [-i|--inventory path] Ansible inventory file path (required)"
+   echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
+   echo "  [-a|--airgap] Airgap installation mode (default: false)"
+   echo "  [--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
+   echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
+   echo "  [-h|--help] Display this usage message"
+   echo "  [-k|--key] Provide a gcr.io registry token key (string) or json key file (json file path)"
+   echo "  [--skip-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
+   echo "  [--download-only-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
+   echo "  [-v|--version] Provide version for kubernetes manifests repository"
+   echo ""
+}
+
+
 function valid_ip {
     local  ip=$1
     local  stat=1
@@ -62,7 +85,9 @@ get_kubernetes_repo(){
     fi
 
     #deploy app
-    deploy_app
+    if [ $download_only_kubernetes_manifest == "false" ]; then
+        deploy_app
+    fi
 }
 
 deploy_app(){
@@ -77,33 +102,13 @@ deploy_app(){
 }
 
 
-#arguments
-function showhelp {
-   echo ""
-   echo "Usage examples:"
-   echo "Online: $0 --inventory inventory/local/hosts.ini --token < gcr.io token > "
-   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8085/ --metallb-range '10.5.0.50-10.5.0.99'"
-   echo "Metallb: $0 --inventory inventory/local/hosts.ini --metallb-range '10.5.0.50-10.5.0.99'"
-   echo ""
-   echo "OPTIONS:"
-   echo "  [-i|--inventory path] Ansible inventory file path (required)"
-   echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
-   echo "  [-a|--airgap] Airgap installation mode (default: false)"
-   echo "  [--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
-   echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
-   echo "  [-h|--help] Display this usage message"
-   echo "  [-k|--key] Provide a gcr.io registry token key (string) or json key file (json file path)"
-   echo "  [--skip-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
-   echo "  [-v|--version] Provide version for kubernetes repository"
-   echo ""
-}
-
 ## Defaults
 airgap="false"
 airgap_bool='{airgap: False}'
 metallb="false"
 skip_kubespray="false"
 skip_kubernetes_manifest="false"
+download_only_kubernetes_manifest="false"
 
 ## Deploy
 POSITIONAL=()
@@ -154,7 +159,12 @@ while [[ $# -gt 0 ]]; do
         shift
         skip_kubernetes_manifest="true"
         continue
-        ;;        
+        ;;
+        download-only-kubernetes-manifest|--download-only-kubernetes-manifest)
+        shift
+        download_only_kubernetes_manifest="true"
+        continue
+        ;;  
         -i|--inventory)
         shift
         inventory="$1"

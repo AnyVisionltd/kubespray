@@ -20,7 +20,18 @@
     - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
 
 - hosts: all
+  gather_facts: false
+  any_errors_fatal: true
+  pre_tasks:
+    - name: wait for for target connection to become reachable/usable
+      wait_for_connection:
+        delay: 5
+        timeout: 600
+
+
+- hosts: all
   gather_facts: true
+  any_errors_fatal: true
   vars:
     airgap: False
   pre_tasks:
@@ -38,6 +49,9 @@
     - name: 'install local repository'
       raw: echo "deb [arch=amd64 trusted=yes allow-insecure=yes] {{repository_address}} bionic main" > /etc/apt/sources.list
       when: airgap is defined and airgap == True
+    - name: 'install prerequisites packages'
+      raw: if [ -x "$(command -v apt)" ]; then apt update && apt install -y python-minimal; fi
+      ignore_errors: true
 
 - hosts: k8s-cluster:etcd:calico-rr
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"
@@ -118,6 +132,7 @@
     - { role: kubespray-defaults }
     - { role: kubernetes-apps/rotate_tokens, tags: rotate_tokens, when: "secret_changed|default(false)" }
     - { role: win_nodes/kubernetes_patch, tags: ["master", "win_nodes"]}
+    #- { role: kubernetes-labels, tags: kubernetes-labels}
 
 - hosts: kube-master
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"

@@ -106,6 +106,7 @@ ingress_nginx_configmap_tcp_services:
   7443: "default/push-notification:7443"
   1935: "default/rtstreamer:1935"
   27017: "default/mongodb:27017"
+  50051: "default/liveness:50051"
 # ingress_nginx_configmap_udp_services:
 #   53: "kube-system/coredns:53"
 

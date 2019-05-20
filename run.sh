@@ -11,19 +11,20 @@ DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 function showhelp {
    echo ""
    echo "Usage examples:"
-   echo "Online: $0 --inventory inventory/local/hosts.ini --key < gcr.io token (string) or json key file path > "
-   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8085/"
-   echo "Metallb: $0 --inventory inventory/local/hosts.ini --metallb-range '10.5.0.50-10.5.0.99'"
+   echo "Online: $0 --inventory $BASEDIR/inventory/local/hosts.ini --key < gcr.io token (string) or json key file path > "
+   echo "Airgap: $0 --inventory $BASEDIR/inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8085/"
+   echo "Metallb: $0 --inventory $BASEDIR/inventory/local/hosts.ini --metallb-range '10.5.0.50-10.5.0.99'"
    echo ""
    echo "OPTIONS:"
-   echo "  [-i|--inventory path] Ansible inventory file path (required)"
+   echo "  [-i|--inventory path] Ansible inventory file path (default: $BASEDIR/inventory/local/hosts.ini)"
    echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
    echo "  [-a|--airgap] Airgap installation mode (default: false)"
    echo "  [--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
    echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
    echo "  [-h|--help] Display this usage message"
    echo "  [-k|--key] Provide a gcr.io registry token key (string) or json key file (json file path)"
-   echo "  [--skip-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
+   #echo "  [--skip-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
+   echo "  [--deploy-app] deploy app better tommorow (default: false)"
    echo "  [--download-only-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
    echo "  [-v|--version] Provide version for kubernetes manifests repository"
    echo ""
@@ -43,6 +44,11 @@ function valid_ip {
         stat=$?
     fi
     return $stat
+}
+
+update_invenotry_file(){
+    echo "update hostname ${HOSTNAME} in invetoryfile ${BASEDIR}/inventory/local/hosts.ini"
+    sed -i "s/node1/${HOSTNAME}/g" ${BASEDIR}/inventory/local/hosts.ini
 }
 
 get_kubernetes_repo(){
@@ -107,7 +113,8 @@ airgap="false"
 airgap_bool='{airgap: False}'
 metallb="false"
 skip_kubespray="false"
-skip_kubernetes_manifest="false"
+#skip_kubernetes_manifest="false"
+deployapp="false"
 download_only_kubernetes_manifest="false"
 
 ## Deploy
@@ -155,9 +162,9 @@ while [[ $# -gt 0 ]]; do
         skip_kubespray="true"
         continue
         ;;
-        skip-kubernetes-manifest|--skip-kubernetes-manifest)
+        deploy-app|--deploy-app)
         shift
-        skip_kubernetes_manifest="true"
+        deployapp="true"
         continue
         ;;
         download-only-kubernetes-manifest|--download-only-kubernetes-manifest)
@@ -180,14 +187,19 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-if [ -z "$inventory" ] && [ ! $skip_kubespray == "true" ] &&  [ $metallb == "true" ]; then
+if [ -z "$inventory" ] && ( [ $skip_kubespray == "false" ] || [ $metallb == "true" ] ) ; then
    echo ""
-   echo "ERROR: Inventory file is not specified"
-   showhelp
-   exit 1
+   echo "info: Inventory file is not specified. will use the default $BASEDIR/inventory/local/hosts.ini"
+   inventory="${BASEDIR}/inventory/local/hosts.ini"
+   #showhelp
+   #exit 1
 fi
 
-if [ $skip_kubernetes_manifest == "false" ] && [ -z "$tokenkey" ] && [ "$airgap" == "false" ]; then
+if [[ $inventory == *"local/hosts.ini"* ]]; then
+    update_invenotry_file
+fi
+
+if [ $deployapp == "true" ] && [ -z "$tokenkey" ] && [ "$airgap" == "false" ]; then
    echo "ERROR: GCR key is not specified"
    showhelp
    exit 1
@@ -283,7 +295,8 @@ if [ $metallb == "true" ]; then
 fi
 
 # Get kubernetes repo and deploy BT
-if [ $skip_kubernetes_manifest == "false" ]; then
+#if [ $skip_kubernetes_manifest == "false" ]; then
+if [ $deployapp == "true" ]; then
     get_kubernetes_repo
 else
     echo "skip get kubernetes manifests"

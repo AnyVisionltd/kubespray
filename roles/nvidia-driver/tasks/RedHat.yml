@@ -38,6 +38,7 @@
     name: cuda-driver
     state: present
     update_cache: yes
+  notify: Reboot node
   #when: (get_os_version is defined) and (get_os_version.stdout.find('Workstation') == -1)
 
 #- name: install cuda-driver 410 on redhat workstation

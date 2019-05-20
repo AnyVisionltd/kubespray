@@ -1,7 +1,10 @@
+# - name: Reboot node
+#   reboot:
+#     reboot_timeout: 600
+#     pre_reboot_delay: 5
+#     post_reboot_delay: 30
+#     test_command: nvidia-smi
+#   ignore_errors: true
+
 - name: Reboot node
-  reboot:
-    reboot_timeout: 600
-    pre_reboot_delay: 5
-    post_reboot_delay: 30
-    test_command: nvidia-smi
-  ignore_errors: true
+  debug: msg="please reboot the server {{inventory_hostname }}"

@@ -7,6 +7,7 @@
     - kube-node
     - etcd
   run_once: true
+  ignore_errors: "{{ ignore_assert_errors }}"
 
 - name: Stop if non systemd OS type
   assert:
@@ -35,7 +36,7 @@
 - name: "Stop if known booleans are set as strings (Use JSON format on CLI: -e \"{'key': true }\")"
   assert:
     that: item.value|type_debug == 'bool'
-    msg: "{{item.value}} isn't a bool"
+    msg: "{{ item.value }} isn't a bool"
   run_once: yes
   with_items:
     - { name: download_run_once, value: "{{ download_run_once }}" }

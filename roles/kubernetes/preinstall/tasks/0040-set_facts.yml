@@ -1,5 +1,6 @@
 ---
-- set_fact:
+- name: set architecture_groups
+  set_fact:
     architecture_groups:
       x86_64: amd64
       aarch64: arm64
@@ -8,9 +9,9 @@
   set_fact:
     host_architecture: >-
       {%- if ansible_architecture in architecture_groups -%}
-      {{architecture_groups[ansible_architecture]}}
+      {{ architecture_groups[ansible_architecture] }}
       {%- else -%}
-       {{ansible_architecture}}
+       {{ ansible_architecture }}
       {% endif %}
 
 - name: Force binaries directory for Container Linux by CoreOS
@@ -25,10 +26,12 @@
     path: /run/ostree-booted
   register: ostree
 
-- set_fact:
+- name: set is_atomic
+  set_fact:
     is_atomic: "{{ ostree.stat.exists }}"
 
-- set_fact:
+- name: set kube_cert_group on atomic hosts
+  set_fact:
     kube_cert_group: "kube"
   when: is_atomic
 
@@ -39,14 +42,13 @@
   changed_when: false
   check_mode: no
 
-- set_fact:
+- name: set dns facts
+  set_fact:
     resolvconf: >-
       {%- if resolvconf.rc == 0 -%}true{%- else -%}false{%- endif -%}
-
-- set_fact:
     bogus_domains: |-
       {% for d in [ 'default.svc.' + dns_domain, 'svc.' + dns_domain ] + searchdomains|default([]) -%}
-      {{dns_domain}}.{{d}}./{{d}}.{{d}}./com.{{d}}./
+      {{ dns_domain }}.{{ d }}./{{ d }}.{{ d }}./com.{{ d }}./
       {%- endfor %}
     cloud_resolver: >-
       {%- if cloud_provider is defined and cloud_provider == 'gce' -%}
@@ -139,9 +141,9 @@
 - name: generate nameservers to resolvconf
   set_fact:
     nameserverentries:
-      nameserver {{( coredns_server + nameservers|d([]) + cloud_resolver|d([])) | join(',nameserver ')}}
+      nameserver {{ ( coredns_server + nameservers|d([]) + cloud_resolver|d([])) | join(',nameserver ') }}
     supersede_nameserver:
-      supersede domain-name-servers {{( coredns_server + nameservers|d([]) + cloud_resolver|d([])) | join(', ') }};
+      supersede domain-name-servers {{ ( coredns_server + nameservers|d([]) + cloud_resolver|d([])) | join(', ') }};
 
 - name: gather os specific variables
   include_vars: "{{ item }}"

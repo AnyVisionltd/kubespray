@@ -2,8 +2,10 @@ download_run_once: True
 download_container: False
 download_localhost: True
 
-kubeadm_download_url: "{{ repository_address }}/kubespray-binaries/kubeadm"
-hyperkube_download_url: "{{ repository_address }}/kubespray-binaries/hyperkube"
+kubeadm_download_url: "{{ repository_address }}/kubespray-binaries/kubeadm-{{ kubeadm_version }}-{{ image_arch }}"
+hyperkube_download_url: "{{ repository_address }}/kubespray-binaries/hyperkube-{{ kube_version }}-{{ image_arch }}"
 etcd_download_url: "{{ repository_address }}/kubespray-binaries/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz"
 cni_download_url: "{{ repository_address }}/kubespray-binaries/cni-plugins-{{ image_arch }}-{{ cni_version }}.tgz"
 calicoctl_download_url: "{{ repository_address }}/kubespray-binaries//calicoctl-linux-{{ image_arch }}"
+
+helm_skip_refresh: True

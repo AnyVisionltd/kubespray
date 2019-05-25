@@ -7,6 +7,30 @@ BASEDIR=$(dirname "$SCRIPT")
 
 DEFAULT_IPV4=$(ip route get 1 | sed -n 's/^.*src \([0-9.]*\) .*$/\1/p')
 
+#arguments
+function showhelp {
+   echo ""
+   echo "Usage examples:"
+   echo "Online: $0 --inventory $BASEDIR/inventory/local/hosts.ini --key < gcr.io token (string) or json key file path > "
+   echo "Airgap: $0 --inventory $BASEDIR/inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8085/"
+   echo "Metallb: $0 --inventory $BASEDIR/inventory/local/hosts.ini --metallb-range '10.5.0.50-10.5.0.99'"
+   echo ""
+   echo "OPTIONS:"
+   echo "  [-i|--inventory path] Ansible inventory file path (default: $BASEDIR/inventory/local/hosts.ini)"
+   echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
+   echo "  [-a|--airgap] Airgap installation mode (default: false)"
+   echo "  [--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
+   echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
+   echo "  [-h|--help] Display this usage message"
+   echo "  [-k|--key] Provide a gcr.io registry token key (string) or json key file (json file path)"
+   #echo "  [--skip-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
+   echo "  [--deploy-app] deploy app better tommorow (default: false)"
+   echo "  [--download-only-kubernetes-manifest] Skip deploy kubernetes manifests (default: false)"
+   echo "  [-v|--version] Provide version for kubernetes manifests repository"
+   echo ""
+}
+
+
 function valid_ip {
     local  ip=$1
     local  stat=1
@@ -22,28 +46,76 @@ function valid_ip {
     return $stat
 }
 
-#arguments
-function showhelp {
-   echo ""
-   echo "Usage examples:"
-   echo "Online: $0 --inventory inventory/local/hosts.ini"
-   echo "Airgap: $0 --inventory inventory/local/hosts.ini --airgap --repository http://[[ LOCAL_APT_REPO_IP_ADDRESS ]]:8080/ --metallb-range '10.5.0.50-10.5.0.99'"
-   echo ""
-   echo "OPTIONS:"
-   echo "  [-i|--inventory path] Ansible inventory file path (required)"
-   echo "  [-r|--repository address] Manually specify APT repository address (default: default route ipv4 address)"
-   echo "  [-a|--airgap] Airgap installation mode (default: false)"
-   echo "  [-m|--metallb-range] Deploy MetalLB layer 2 load-balancer and specify its IP range (default: false)"
-   echo "  [--skip-kubespray] Skip Kubespray playbook (default: false)"
-   echo "  [-h|--help] Display this usage message"
-   echo ""
+update_invenotry_file(){
+    echo "update hostname ${HOSTNAME} in invetoryfile ${BASEDIR}/inventory/local/hosts.ini"
+    sed -i "s/node1/${HOSTNAME}/g" ${BASEDIR}/inventory/local/hosts.ini
 }
+
+get_kubernetes_repo(){
+    k8s_manifests_dir="/opt/kubernetes"    
+    kubernetes_ver=${kubernetes_version:-1.22.0}
+
+    #if kubernetes maniferst already exist and not empty dir
+    if [ -d ${k8s_manifests_dir}/${kubernetes_ver} ] && [ "$(ls -A ${k8s_manifests_dir}/${kubernetes_ver})" ] ; then
+        echo "the kubernetes dir ${k8s_manifests_dir}/${kubernetes_ver} is already exist. skipping get kubernetes repo..."
+    elif [ $airgap == "true" ] ; then
+        echo "airgap mode is on. skipping get kubernetes repo..."
+    else #if kubernetes maniferst is not exist
+        # exit if not provided any token 
+        if [ -z "$tokenkey" ]; then
+            echo ""
+            echo "ERROR: Token is not specified."
+            showhelp
+            exit 1
+        elif [[ $tokenkey != "" ]] && [[ $tokenkey == *".json" ]] && [[ -f $tokenkey ]] ;then
+            echo "detected gcr json key file: $tokenkey"
+            gcr_user="_json_key" 
+            gcr_key="$(cat ${tokenkey} | tr '\n' ' ')"
+        elif  [[ $tokenkey != "" ]] && [[ ! -f $tokenkey ]] && [[ $tokenkey != *".json" ]]; then
+            echo "detected gcr token: $tokenkey"
+            gcr_user="oauth2accesstoken"
+            gcr_key=$tokenkey
+        fi
+
+        echo "Login to gcr.io"       
+        docker login "https://gcr.io" --username "${gcr_user}" --password "${gcr_key}"
+        image_name=gcr.io/${gcr_account:-anyvision-production}/kubernetes:${kubernetes_ver}
+        echo "Pulling kubernetes container repo: ${image_name}"
+        set -e
+        docker pull $image_name
+        id=$(docker create $image_name)
+        mkdir -p ${k8s_manifests_dir}/${kubernetes_ver}
+        docker cp $id:/kubernetes/. ${k8s_manifests_dir}/${kubernetes_ver}
+        docker rm -v $id
+        set +e
+    fi
+
+    #deploy app
+    if [ $download_only_kubernetes_manifest == "false" ]; then
+        deploy_app
+    fi
+}
+
+deploy_app(){
+
+    echo "deploy app"
+    cd ${k8s_manifests_dir}/${kubernetes_ver}/templates/
+    if [ $airgap == "true" ] ; then
+        ./deployer.sh -b
+    else
+        ./deployer.sh -k "${tokenkey}" -b
+    fi
+}
+
 
 ## Defaults
 airgap="false"
 airgap_bool='{airgap: False}'
 metallb="false"
 skip_kubespray="false"
+#skip_kubernetes_manifest="false"
+deployapp="false"
+download_only_kubernetes_manifest="false"
 
 ## Deploy
 POSITIONAL=()
@@ -69,15 +141,37 @@ while [[ $# -gt 0 ]]; do
         -m|--metallb-range)
         shift
         metallb="true"
-	metallb_vars="{'metallb':{'ip_range':'$1','limits':{'cpu':'100m','memory':'100Mi'},'port':'7472','version':'v0.7.3'}}"
-	shift
+        metallb_vars="{'metallb':{'ip_range':'$1','limits':{'cpu':'100m','memory':'100Mi'},'port':'7472','version':'v0.7.3'}}"
+        shift
         continue
         ;;
-        --skip-kubespray)
+        -v|--version|--version)
+        shift
+        kubernetes_version="$1"
+        shift
+        continue
+        ;;
+        -k|key|--key)
+        shift
+        tokenkey="$1"
+        shift
+        continue
+        ;;
+        skip-kubespray|--skip-kubespray)
         shift
         skip_kubespray="true"
         continue
         ;;
+        deploy-app|--deploy-app)
+        shift
+        deployapp="true"
+        continue
+        ;;
+        download-only-kubernetes-manifest|--download-only-kubernetes-manifest)
+        shift
+        download_only_kubernetes_manifest="true"
+        continue
+        ;;  
         -i|--inventory)
         shift
         inventory="$1"
@@ -93,16 +187,27 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-if [ -z "$inventory" ]; then
+if [ -z "$inventory" ] && ( [ $skip_kubespray == "false" ] || [ $metallb == "true" ] ) ; then
    echo ""
-   echo "ERROR: Inventory file is not specified"
+   echo "info: Inventory file is not specified. will use the default $BASEDIR/inventory/local/hosts.ini"
+   inventory="${BASEDIR}/inventory/local/hosts.ini"
+   #showhelp
+   #exit 1
+fi
+
+if [[ $inventory == *"local/hosts.ini"* ]]; then
+    update_invenotry_file
+fi
+
+if [ $deployapp == "true" ] && [ -z "$tokenkey" ] && [ "$airgap" == "false" ]; then
+   echo "ERROR: GCR key is not specified"
    showhelp
    exit 1
 fi
 
 if [ -z "$repository_address" ] && [ $airgap == "true" ]; then
     if valid_ip $DEFAULT_IPV4; then
-        repository_address="http://$DEFAULT_IPV4:8080/"
+        repository_address="http://$DEFAULT_IPV4:8085/"
     else
         echo ""
         echo "ERROR: Unable to retrieve a valid default ipv4 address, please specify the APT repository address manually using the --repository option"
@@ -125,6 +230,18 @@ if [ -x "$(command -v apt-get)" ]; then
 	    set +e
 	fi
 elif [ -x "$(command -v yum)" ]; then
+    
+    #curl -O https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    #rpm -i --force ./epel-release-latest-7.noarch.rpm
+    #grep -q  'Workstation' /etc/redhat-release
+    #if [ $? -eq 0 ] ; then
+    #   if ! rpm --quiet --query container-selinux; then
+    #      sudo rpm -ihv http://ftp.riken.jp/Linux/cern/centos/7/extras/x86_64/Packages/container-selinux-2.9-4.el7.noarch.rpm
+    #   fi
+    #fi
+    yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    sudo yum install -y python-pip git yum pciutils ansible
+
 	for package in \
 		python \
 		python-pip \
@@ -142,8 +259,8 @@ fi
 
 # install ansible
 set -e
-pip install --quiet --no-index --find-links ./pip_deps/ setuptools
-pip install --quiet --no-index --find-links ./pip_deps/ -r requirements.txt
+pip install --quiet --no-index --find-links $BASEDIR/pip_deps/ setuptools
+pip install --quiet --no-index --find-links $BASEDIR/pip_deps/ -r $BASEDIR/requirements.txt
 set +e
 
 if [ $airgap == "true" ]; then
@@ -160,16 +277,28 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_PIPELINING=True
 
 if [ ! $skip_kubespray == "true" ]; then
-    ansible-playbook -vv -i "$inventory" \
+    ansible-playbook -i "$inventory" \
       --become --become-user=root \
       -e "$airgap_bool" \
       -e repository_address="$repository_address" \
-      $BASEDIR/cluster.yml "$@"
+      $BASEDIR/cluster.yml -vv "$@"
+else
+    echo "skip kubespray"
 fi
 
 if [ $metallb == "true" ]; then
-    ansible-playbook -vv -i "$inventory" \
+    echo "deploy metallb"
+    ansible-playbook -i "$inventory" \
       --become --become-user=root \
       -e "$metallb_vars" \
-      $BASEDIR/contrib/metallb/metallb.yml "$@"
+      $BASEDIR/contrib/metallb/metallb.yml -vv "$@"
 fi
+
+# Get kubernetes repo and deploy BT
+#if [ $skip_kubernetes_manifest == "false" ]; then
+if [ $deployapp == "true" ]; then
+    get_kubernetes_repo
+else
+    echo "skip get kubernetes manifests"
+fi
+

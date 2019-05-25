@@ -4,13 +4,14 @@
 dashboard_enabled: true
 
 # Helm deployment
-helm_enabled: true
+helm_enabled: false
 
 # Registry deployment
 registry_enabled: true
 registry_namespace: kube-system
 # registry_storage_class: ""
 # registry_disk_size: "10Gi"
+kubernetes_docker_registry: "localhost:5000"
 
 # Metrics Server deployment
 metrics_server_enabled: false
@@ -26,8 +27,6 @@ local_path_provisioner_reclaim_policy: Delete
 local_path_provisioner_claim_root: /ssd/local-path-provisioner/
 local_path_provisioner_is_default_storageclass: true
 local_path_provisioner_debug: false
-local_path_provisioner_image_repo: "rancher/local-path-provisioner"
-local_path_provisioner_image_tag: "v0.0.7"
 
 # Local volume provisioner deployment
 local_volume_provisioner_enabled: false
@@ -79,7 +78,6 @@ rbd_provisioner_enabled: false
 # Nginx ingress controller deployment
 ingress_nginx_enabled: true
 ingress_nginx_host_network: true
-# ingress_nginx_nodeselector:
 #   beta.kubernetes.io/os: "linux": ""
 ingress_nginx_nodeselector: {}
 ingress_nginx_tolerations:
@@ -108,8 +106,9 @@ ingress_nginx_configmap_tcp_services:
   7443: "default/push-notification:7443"
   1935: "default/rtstreamer:1935"
   27017: "default/mongodb:27017"
+  50051: "default/liveness:50051"
 # ingress_nginx_configmap_udp_services:
-#   53: "kube-system/kube-dns:53"
+#   53: "kube-system/coredns:53"
 
 # Cert manager deployment
 cert_manager_enabled: true

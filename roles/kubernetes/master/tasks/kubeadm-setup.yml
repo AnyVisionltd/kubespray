@@ -3,7 +3,7 @@
   stat:
     path: "{{ kube_cert_dir }}/apiserver.pem"
   register: old_apiserver_cert
-  delegate_to: "{{groups['kube-master']|first}}"
+  delegate_to: "{{ groups['kube-master'] | first }}"
   run_once: true
 
 - name: kubeadm | Migrate old certs if necessary
@@ -41,21 +41,21 @@
 
 - name: kubeadm | Delete old static pods
   file:
-    path: "{{ kube_config_dir }}/manifests/{{item}}.manifest"
+    path: "{{ kube_config_dir }}/manifests/{{ item }}.manifest"
     state: absent
   with_items: ["kube-apiserver", "kube-controller-manager", "kube-scheduler", "kube-proxy"]
   when:
     - old_apiserver_cert.stat.exists
 
 - name: kubeadm | Forcefully delete old static pods
-  shell: "docker ps -f name=k8s_{{item}} -q | xargs --no-run-if-empty docker rm -f"
+  shell: "docker ps -f name=k8s_{{ item }} -q | xargs --no-run-if-empty docker rm -f"
   with_items: ["kube-apiserver", "kube-controller-manager", "kube-scheduler"]
   when:
     - old_apiserver_cert.stat.exists
 
 - name: kubeadm | aggregate all SANs
   set_fact:
-    apiserver_sans: "{{ (sans_base + groups['kube-master'] + sans_lb + sans_supp + sans_access_ip + sans_ip + sans_address) | unique }}"
+    apiserver_sans: "{{ (sans_base + groups['kube-master'] + sans_lb + sans_lb_ip + sans_supp + sans_access_ip + sans_ip + sans_address) | unique }}"
   vars:
     sans_base:
       - "kubernetes"
@@ -66,6 +66,7 @@
       - "localhost"
       - "127.0.0.1"
     sans_lb: "{{ [apiserver_loadbalancer_domain_name] if apiserver_loadbalancer_domain_name is defined else [] }}"
+    sans_lb_ip: "{{ [loadbalancer_apiserver.address] if loadbalancer_apiserver is defined and loadbalancer_apiserver.address is defined else [] }}"
     sans_supp: "{{ supplementary_addresses_in_ssl_keys if supplementary_addresses_in_ssl_keys is defined else [] }}"
     sans_access_ip: "{{ groups['kube-master'] | map('extract', hostvars, 'access_ip') | list | select('defined') | list }}"
     sans_ip: "{{ groups['kube-master'] | map('extract', hostvars, 'ip') | list | select('defined') | list }}"
@@ -105,12 +106,12 @@
     {{ bin_dir }}/kubeadm init
     --config={{ kube_config_dir }}/kubeadm-config.yaml
     --ignore-preflight-errors=all
+    --skip-phases=addon/coredns
     {% if kubeadm_version is version('v1.14.0', '>=') %}
     --experimental-upload-certs
-    {% endif %}
-    --skip-phases=addon/coredns
     {% if kubeadm_certificate_key is defined %}
     --certificate-key={{ kubeadm_certificate_key }}
+    {% endif %}
     {% endif %}
   register: kubeadm_init
   # Retry is because upload config sometimes fails
@@ -147,7 +148,7 @@
   retries: 5
   delay: 5
   until: temp_token is succeeded
-  delegate_to: "{{groups['kube-master']|first}}"
+  delegate_to: "{{ groups['kube-master'] | first }}"
   when: kubeadm_token is not defined
   tags:
     - kubeadm_token
@@ -190,7 +191,7 @@
 # FIXME(mattymo): from docs: If you don't want to taint your control-plane node, set this field to an empty slice, i.e. `taints: {}` in the YAML file.
 - name: kubeadm | Remove taint for master with node role
   command: "{{ bin_dir }}/kubectl --kubeconfig {{ kube_config_dir }}/admin.conf taint node {{ inventory_hostname }} node-role.kubernetes.io/master:NoSchedule-"
-  delegate_to: "{{groups['kube-master']|first}}"
+  delegate_to: "{{ groups['kube-master'] | first }}"
   when: inventory_hostname in groups['kube-node']
   failed_when: false
 

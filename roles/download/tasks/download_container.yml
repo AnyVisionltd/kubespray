@@ -24,6 +24,7 @@
     - download.enabled
     - download.container
     - any_pull_required | default(download_always_pull)
+    - airgap is undefined or airgap == False    
   delegate_to: "{{ download_delegate }}"
   delegate_facts: yes
   run_once: yes
@@ -41,3 +42,4 @@
     - download.container
     - pull_required|default(download_always_pull)
     - group_names | intersect(download.groups) | length
+    - airgap is undefined or airgap == False    

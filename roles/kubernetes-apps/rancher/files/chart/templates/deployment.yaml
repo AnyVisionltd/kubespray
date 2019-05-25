@@ -52,8 +52,6 @@ spec:
         ports:
         - containerPort: 80
           protocol: TCP
-        - containerPort: 443
-          protocol: TCP
         args:
 {{- if .Values.debug }}
         - "--debug"

@@ -3,7 +3,7 @@
 # See README.md for details.
 additionalTrustedCAs: false
 
-antiAffinity: required
+antiAffinity: preferred
 
 # Audit Logs https://rancher.com/docs/rancher/v2.x/en/installation/api-auditing/
 # The audit log is piped to the console of the rancher-audit-log container in the rancher pod.
@@ -35,7 +35,7 @@ debug: false
 #   value: "registry.example.com"
 
 # Fully qualified name to reach your Rancher server
-# hostname: rancher.anv.local
+hostname: rancher.my.org
 
 ## Optional array of imagePullSecrets containing private registry credentials
 ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
@@ -74,10 +74,10 @@ noProxy: 127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
 rancherImage: rancher/rancher
 # rancher/rancher image tag. https://hub.docker.com/r/rancher/rancher/tags/
 # Defaults to .Chart.appVersion
-rancherImageTag: v2.2.2
+rancherImageTag: v2.2.3
 
 # Number of Rancher server replicas.
-replicas: 1
+replicas: 3
 
 # Set pod resource requests/limits for Rancher.
 resources: {}
@@ -87,4 +87,4 @@ resources: {}
 #   Where to offload the TLS/SSL encryption
 # - ingress (default)
 # - external
-tls: external
+tls: ingress

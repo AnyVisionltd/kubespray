@@ -80,7 +80,8 @@
 - name: Stop if ip var does not match local ips
   assert:
     that: ip in ansible_all_ipv4_addresses
-  ignore_errors: "{{ ignore_assert_errors }}"
+  #ignore_errors: "{{ ignore_assert_errors }}"
+  ignore_errors: true
   when: ip is defined
 
 - name: Stop if access_ip is not pingable

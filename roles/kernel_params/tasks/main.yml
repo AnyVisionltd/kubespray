@@ -205,4 +205,5 @@
     echo none > /sys/block/{{item}}/queue/scheduler &&
     echo 1023 > /sys/block/{{item}}/queue/nr_requests
   with_items: "{{ hostvars[inventory_hostname]['ansible_devices'].keys() }}"
+  ignore_errors: true
   when: (hostvars[inventory_hostname]["ansible_devices"].keys() is defined) and (item | search("nvme"))

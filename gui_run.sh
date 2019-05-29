@@ -121,21 +121,33 @@ deploy_app(){
 
     arguments=""
 
-    if [ ${INSTALL_TYPE} == "UPGRADE"] &&  [ ${PRODUCT_TYPE} == "BT"]; then
-        arguments+=" --better_tomorrow"
+    if [ ${INSTALL_TYPE} == "UPGRADE"] &&  [ ${PRODUCT_TYPE} == "BT"] && [ $mongo_migration == "true" ]; then
+        arguments+=" --mongodb_migration"
     fi
 
     if [ ${PRODUCT_TYPE} == "BT"]; then
         arguments+=" --better_tomorrow"
     fi
 
+    if [ ${INSTALL_TYPE} == "UPGRADE"] &&  [ ${PRODUCT_TYPE} == "HQ"] && [ $mongo_migration == "true" ]; then
+        arguments+=" --hq_migration"
+    fi
+
+    if [ ${PRODUCT_TYPE} == "HQ"]; then
+        arguments+=" --hq"
+    fi
+
+
     echo "deploy app"
     #cd ${k8s_manifests_dir}/${kubernetes_ver}/templates/
-    if [ $airgap == "true" ] ; then
-        ${k8s_manifests_dir}/${kubernetes_ver}/templates/deployer.sh -b
-    else
-        ${k8s_manifests_dir}/${kubernetes_ver}/templates/deployer.sh -k "${tokenkey}" -b
-    fi
+
+    ${k8s_manifests_dir}/${kubernetes_ver}/templates/deployer.sh ${arguments}
+
+    # if [ $airgap == "true" ] ; then
+    #     ${k8s_manifests_dir}/${kubernetes_ver}/templates/deployer.sh -b
+    # else
+    #     ${k8s_manifests_dir}/${kubernetes_ver}/templates/deployer.sh -k "${tokenkey}" -b
+    # fi
 }
 
 
@@ -188,6 +200,22 @@ if [[ ${INSTALL_TYPE:-} == "UPGRADE" ]]; then
         exit 0
     fi
     DATA_MIGRATION_TYPE_LIST=$(echo $DATA_MIGRATION_TYPE | tr -d '"' | tr " " "\n")
+
+    mongo_migration="false"
+    ta_migration="false"
+    objectstorage_migration="false"
+    while IFS='' read -r migrationType || [ -n "$migrationType" ]; do
+
+    if [[ ${migrationType} == "MONGO" ]]; then
+        mongo_migration="true"
+    elif [[ ${migrationType} == "OBJECT_STORAGE" ]]; then
+        ta_migration="true"
+    elif [[ ${migrationType} == "TA" ]]; then
+        objectstorage_migration="true"
+    fi
+
+    done <<< "${DATA_MIGRATION_TYPE_LIST}"
+
 fi
 
 # Version Screen

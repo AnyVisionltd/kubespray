@@ -107,6 +107,7 @@ ingress_nginx_configmap_tcp_services:
   1935: "default/rtstreamer:1935"
   27017: "default/mongodb:27017"
   50051: "default/liveness:50051"
+  8081: "default/dslr-dashboard-bt:8081"
 # ingress_nginx_configmap_udp_services:
 #   53: "kube-system/coredns:53"
 

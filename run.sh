@@ -46,8 +46,8 @@ function valid_ip {
     return $stat
 }
 
-update_invenotry_file(){
-    echo "update hostname ${HOSTNAME} in invetoryfile ${BASEDIR}/inventory/local/hosts.ini"
+update_inventory_file(){
+    echo "update hostname ${HOSTNAME} in inventory file ${BASEDIR}/inventory/local/hosts.ini"
     sed -i "s/node1/${HOSTNAME}/g" ${BASEDIR}/inventory/local/hosts.ini
 }
 
@@ -196,7 +196,7 @@ if [ -z "$inventory" ] && ( [ $skip_kubespray == "false" ] || [ $metallb == "tru
 fi
 
 if [[ $inventory == *"local/hosts.ini"* ]]; then
-    update_invenotry_file
+    update_inventory_file
 fi
 
 if [ $deployapp == "true" ] && [ -z "$tokenkey" ] && [ "$airgap" == "false" ]; then

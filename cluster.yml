@@ -20,20 +20,38 @@
     - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
 
 
-# - hosts: 'all:!localhost'
-#   gather_facts: false
-#   any_errors_fatal: true
-#   tasks:
-#     - name: wait for for target connection to become reachable on port 22
-#       wait_for:
-#         port: 22
-#         host: "{{ hostvars[item].ansible_host }}"
-#         connect_timeout: 15
-#         timeout: 300
-#         state: present
-#       with_items: "{{ groups['all'] }}"
+- hosts: 'k8s-cluster:!localhost'
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+   - name: wait for for target connection to become reachable on port 22
+      wait_for:
+        port: 22
+        host: "{{ hostvars[item].ansible_host }}"
+        connect_timeout: 15
+        timeout: 300
+        state: present
+      with_items: "{{ groups['k8s-cluster'] }}"
 
+# install python as PREQ 
+- hosts: all
+  gather_facts: false
+  any_errors_fatal: true
+  pre_tasks:
+    - name: 'install prerequisites packages'
+      raw: if [ -x "$(command -v apt)" ]; then apt update && apt install -y python-minimal; fi
+      ignore_errors: true
 
+# Validation IP and GW
+- hosts: all
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - fail:
+        msg: "{{inventory_hostname}} has not valid ip"
+      when: (hostvars[inventory_hostname]['ansible_default_ipv4']['address'] is not defined) or hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] is not defined
+
+# AirGap 
 - hosts: all
   gather_facts: true
   any_errors_fatal: true
@@ -45,18 +63,12 @@
     - fail:
         msg: 'Variable {{repository_address}} is not defined while airgap mode is requested, either manually define {{repository_address}} or disable airgap mode'
       when: (airgap is defined and airgap == True) and repository_address is not defined
-    - fail:
-        msg: "{{inventory_hostname}} has not valid ip"
-      when: (hostvars[inventory_hostname]['ansible_default_ipv4']['address'] is not defined) or hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] is not defined
     - name: 'clear all original repositories'
       raw: if [ -f /etc/apt/sources.list ]; then cp -n /etc/apt/sources.list /etc/apt/sources.list.original; fi
       when: airgap is defined and airgap == True
     - name: 'install local repository'
       raw: echo "deb [arch=amd64 trusted=yes allow-insecure=yes] {{repository_address}} bionic main" > /etc/apt/sources.list
       when: airgap is defined and airgap == True
-    - name: 'install prerequisites packages'
-      raw: if [ -x "$(command -v apt)" ]; then apt update && apt install -y python-minimal; fi
-      ignore_errors: true
 
 - hosts: k8s-cluster:etcd:calico-rr
   any_errors_fatal: "{{ any_errors_fatal | default(true) }}"

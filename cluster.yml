@@ -24,14 +24,14 @@
   gather_facts: false
   any_errors_fatal: true
   tasks:
-   - name: wait for for target connection to become reachable on port 22
-      wait_for:
-        port: 22
-        host: "{{ hostvars[item].ansible_host }}"
-        connect_timeout: 15
-        timeout: 300
-        state: present
-      with_items: "{{ groups['k8s-cluster'] }}"
+  - name: wait for for target connection to become reachable on port 22
+    wait_for:
+      port: 22
+      host: "{{ hostvars[item].ansible_host }}"
+      connect_timeout: 15
+      timeout: 300
+      state: present
+    with_items: "{{ groups['k8s-cluster'] }}"
 
 # install python as PREQ 
 - hosts: all
@@ -182,6 +182,8 @@
   roles:
     - { role: kubespray-defaults }
     - { role: kubernetes-apps, tags: apps }
+    - { role: kubernetes-apps/chartmuseum, tags: ["apps", "chartmuseum"] }
+    - { role: kubernetes-apps/rancher, tags: ["apps", "rancher"] }
     - { role: load-app-images, tags: load-app-images, when: "registry_enabled and airgap is defined and airgap == True" }
   environment: "{{proxy_env}}"
 

@@ -122,8 +122,8 @@
     #- { role: nvidia-prerequisite, become: yes, tags: ["nvidia-driver"] }
     #- { role: nvidia-driver, become: yes, tags: ["nvidia-driver"] }
     #- { role: nvidia-docker, become: yes, tags: ["nvidia-docker"] }
-    - { role: ansible-role-nvidia-driver, become: yes, tags: ["nvidia-driver"] }
-    - { role: ansible-role-nvidia-docker, become: yes, tags: ["nvidia-docker"] }
+    - { role: ansible-role-nvidia-driver, become: yes, tags: ["nvidia-driver"], when: "(((nvidia_device_lspci is defined) and (nvidia_device_lspci.stdout.find('NVIDIA') != -1)) or ((nvidia_device_lshw is defined) and (nvidia_device_lshw.stdout.find('NVIDIA') != -1)))" }
+    - { role: ansible-role-nvidia-docker, become: yes, tags: ["nvidia-docker"], when: "(((nvidia_device_lspci is defined) and (nvidia_device_lspci.stdout.find('NVIDIA') != -1)) or ((nvidia_device_lshw is defined) and (nvidia_device_lshw.stdout.find('NVIDIA') != -1)))" }
     - { role: docker-settings, become: yes , tags: ["docker-settings"] }
   environment: "{{ proxy_env }}"
 

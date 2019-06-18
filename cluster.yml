@@ -42,15 +42,6 @@
       state: present
     with_items: "{{ groups['k8s-cluster'] }}"
 
-# install python as PREQ 
-- hosts: all
-  gather_facts: false
-  any_errors_fatal: true
-  pre_tasks:
-    - name: 'install prerequisites packages'
-      raw: if [ -x "$(command -v apt)" ]; then apt update && apt install -y python-minimal; fi
-      ignore_errors: true
-
 # Validation IP and GW
 - hosts: all
   gather_facts: true

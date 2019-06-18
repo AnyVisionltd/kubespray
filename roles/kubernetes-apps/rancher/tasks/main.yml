@@ -15,9 +15,8 @@
   when: inventory_hostname == groups['kube-master'][0]
 
 - name: Rancher | Install helm chart
-  shell: "helm install {{ kube_config_dir }}/addons/rancher --namespace cattle-system --name rancher --set hostname='rancher.anv' --wait --timeout 90"
   shell: "helm upgrade --install rancher {{ kube_config_dir }}/addons/rancher --namespace cattle-system --set hostname='rancher.anv' --wait --timeout 90"
-#  ignore_errors: yes
+  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
 - name: Rancher | Copy jq to /usr/local/bin
@@ -63,5 +62,5 @@
     rancher catalog add anyvision http://get.a-v.io > /dev/null
     rancher catalog delete library > /dev/null
     kubectl create secret generic rancher-cli-token --from-file=/root/.rancher/cli2.json --dry-run -o yaml | kubectl apply -f -
-#  ignore_errors: yes
+  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]

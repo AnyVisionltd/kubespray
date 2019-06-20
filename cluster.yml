@@ -20,7 +20,7 @@
     - { role: bastion-ssh-config, tags: ["localhost", "bastion"]}
 
 
-# install python as PREQ 
+# install python as PREQ
 - hosts: all
   gather_facts: false
   any_errors_fatal: true
@@ -182,6 +182,8 @@
   roles:
     - { role: kubespray-defaults }
     - { role: kubernetes-apps, tags: apps }
+    - { role: kubernetes-apps/chartmuseum, tags: ["apps", "chartmuseum"] }
+    - { role: kubernetes-apps/rancher, tags: ["apps", "rancher"] }
     - { role: load-app-images, tags: load-app-images, when: "registry_enabled and airgap is defined and airgap == True" }
   environment: "{{proxy_env}}"
 

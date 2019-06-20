@@ -112,5 +112,5 @@ ingress_nginx_configmap_tcp_services:
 #   53: "kube-system/coredns:53"
 
 # Cert manager deployment
-cert_manager_enabled: true
-cert_manager_namespace: "default"
+cert_manager_enabled: false
+cert_manager_namespace: "cert-manager"

@@ -36,7 +36,6 @@
   - name: wait for for target connection to become reachable on port 22
     wait_for:
       port: 22
-      host: "{{ hostvars[item].ansible_host }}"
       connect_timeout: 15
       timeout: 300
       state: present

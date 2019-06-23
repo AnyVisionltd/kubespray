@@ -5,7 +5,7 @@
 
 
 - name: "kubernetes add node labels to : edge-nodes"
-  shell: "kubectl label nodes {{hostvars[item].inventory_hostname}} {{node_labels_edge_nodes}} --overwrite=true"
+  shell: "kubectl label nodes {{hostvars[item].inventory_hostname}} app=edge edge=true --overwrite=true"
   with_items:
     - "{{ groups['edge-nodes'] }}"
   when: node_labels_edge_nodes != ""
@@ -20,7 +20,7 @@
 
 
 - name: "kubernetes add node labels to : backend-node"
-  shell: "kubectl label nodes {{hostvars[item].inventory_hostname}} {{node_labels_backend_node}} --overwrite=true"
+  shell: "kubectl label nodes {{hostvars[item].inventory_hostname}} backend=true mode=backend --overwrite=true"
   with_items:
     - "{{ groups['backend-node'] }}"
   when: node_labels_backend_node != ""  

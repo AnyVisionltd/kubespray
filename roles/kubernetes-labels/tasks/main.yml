@@ -1,11 +1,11 @@
 - name: create node label list for edge-nodes
   set_fact:
     node_labels_edge_nodes: "{{node_labels_edge_nodes | default('')}} {{item.key}}={{item.value}}"
-  with_dict: "{{ hostvars[groups['edge-nodes'][0]]['node_labels'] }}"
+  with_dict: "{{ edge_node_labels }}"
 
 
 - name: "kubernetes add node labels to : edge-nodes"
-  shell: "kubectl label nodes {{hostvars[item].inventory_hostname}} app=edge edge=true --overwrite=true"
+  shell: "kubectl label nodes {{hostvars[item].inventory_hostname}} {{node_labels_edge_nodes}} --overwrite=true"
   with_items:
     - "{{ groups['edge-nodes'] }}"
   when: node_labels_edge_nodes != ""
@@ -16,11 +16,11 @@
 - name: create node label list for backend-node
   set_fact:
     node_labels_backend_node: "{{node_labels_backend_node | default('')}} {{item.key}}={{item.value}}"
-  with_dict: "{{ hostvars[groups['backend-node'][0]]['node_labels'] }}"
+  with_dict: "{{ backend_node_labels }}"
 
 
 - name: "kubernetes add node labels to : backend-node"
-  shell: "kubectl label nodes {{hostvars[item].inventory_hostname}} backend=true mode=backend --overwrite=true"
+  shell: "kubectl label nodes {{hostvars[item].inventory_hostname}} {{node_labels_backend_node}} --overwrite=true"
   with_items:
     - "{{ groups['backend-node'] }}"
   when: node_labels_backend_node != ""  
@@ -31,7 +31,7 @@
 - name: create node label list for manager-node
   set_fact:
     node_labels_manager_node: "{{node_labels_manager_node | default('')}} {{item.key}}={{item.value}}"
-  with_dict: "{{ hostvars[groups['manager-node'][0]]['node_labels'] }}"
+  with_dict: "{{ manager_node_labels }}"
 
 
 - name: "kubernetes add node labels to : manager-node"

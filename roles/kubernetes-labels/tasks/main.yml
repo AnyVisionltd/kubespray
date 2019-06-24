@@ -1,7 +1,7 @@
 - name: create node label list for edge-nodes
   set_fact:
     node_labels_edge_nodes: "{{node_labels_edge_nodes | default('')}} {{item.key}}={{item.value}}"
-  with_dict: "{{ hostvars[groups['edge-nodes'][0]]['node_labels'] }}"
+  with_dict: "{{ edge_node_labels }}"
 
 
 - name: "kubernetes add node labels to : edge-nodes"
@@ -16,7 +16,7 @@
 - name: create node label list for backend-node
   set_fact:
     node_labels_backend_node: "{{node_labels_backend_node | default('')}} {{item.key}}={{item.value}}"
-  with_dict: "{{ hostvars[groups['backend-node'][0]]['node_labels'] }}"
+  with_dict: "{{ backend_node_labels }}"
 
 
 - name: "kubernetes add node labels to : backend-node"
@@ -31,7 +31,7 @@
 - name: create node label list for manager-node
   set_fact:
     node_labels_manager_node: "{{node_labels_manager_node | default('')}} {{item.key}}={{item.value}}"
-  with_dict: "{{ hostvars[groups['manager-node'][0]]['node_labels'] }}"
+  with_dict: "{{ manager_node_labels }}"
 
 
 - name: "kubernetes add node labels to : manager-node"

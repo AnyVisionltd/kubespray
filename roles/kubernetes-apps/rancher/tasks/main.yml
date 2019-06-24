@@ -45,7 +45,7 @@
     kubectl create namespace cert-manager
     kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
     helm upgrade --install cert-manager stable/cert-manager --namespace cert-manager --version v0.6.7
-#  ignore_errors: yes
+  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
 #

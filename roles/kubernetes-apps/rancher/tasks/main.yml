@@ -31,8 +31,6 @@
   shell: |
       wget -q https://github.com/argoproj/argo/releases/download/v2.3.0/argo-linux-amd64 -O /usr/local/bin/argo
       chmod +x /usr/local/bin/argo
-      source <(argo completion bash)
-      ansible localhost -m lineinfile -a "dest=/root/.bashrc line='source <(argo completion bash)'" > /dev/null
   ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
@@ -94,4 +92,3 @@
     kubectl -n cattle-system patch service rancher --patch '{"spec": {"ports": [{"name": "https","port": 443,"protocol": "TCP","targetPort": 443}]}}'
   ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
-

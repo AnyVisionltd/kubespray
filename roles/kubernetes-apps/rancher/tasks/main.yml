@@ -19,6 +19,15 @@
   ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
+- name: Argo | Install Argo
+  shell: |
+    helm repo add argo https://argoproj.github.io/argo-helm
+    helm upgrade --install argo argo/argo --namespace=kube-system \
+    --set ui.ingress.enabled=true,ui.ingress.hosts[0]=argo.anv,ui.ingress.annotation."kubernetes\.io/ingress\.class"=nginx,images.pullPolicy=IfNotPresent,images.tag=v2.3.0
+  ignore_errors: yes
+  when: inventory_hostname == groups['kube-master'][0]
+
+
 - name: Rancher | Copy jq to /usr/local/bin
   synchronize:
     src: jq

@@ -27,6 +27,14 @@
 #  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
+- name: Argo | Install Argo Cli
+  shell: |
+      wget -q https://github.com/argoproj/argo/releases/download/v2.3.0/argo-linux-amd64 -O /usr/local/bin/argo
+      chmod +x /usr/local/bin/argo
+      source <(argo completion bash)
+      ansible localhost -m lineinfile -a "dest=/root/.bashrc line='source <(argo completion bash)'" > /dev/null
+  ignore_errors: yes
+  when: inventory_hostname == groups['kube-master'][0]
 
 - name: Rancher | Copy jq to /usr/local/bin
   synchronize:
@@ -57,31 +65,33 @@
   ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
-#
-#- name: Rancher | Interact with Rancher API
-#  shell: |
-#    RANCHER_SERVER_BASE=https://rancher.anv
-#
-#    # Wait until server is alive
-#    while ! curl -k ${RANCHER_SERVER_BASE}/ping; do sleep 3; done
-#
-#    # Login with default admin credentials get a temporary token with 60s TTL
-#    LOGINRESPONSE=`curl -s "${RANCHER_SERVER_BASE}/v3-public/localProviders/local?action=login" -H "content-type: application/json" --data-binary '{"username":"admin","password":"admin","ttl":60000}' --insecure`
-#    LOGINTOKEN=`echo $LOGINRESPONSE | jq -r .token`
-#
-#    # Change admin password
-#    #curl -s "${RANCHER_SERVER_BASE}/v3/users?action=changepassword" -H "content-type: application/json" -H "Authorization: Bearer $LOGINTOKEN" --data-binary '{"currentPassword":"admin","newPassword":"thisisyournewpassword"}' --insecure
-#
-#    # Create and get admin API key
-#    APIRESPONSE=`curl -s "${RANCHER_SERVER_BASE}/v3/token" -H "content-type: application/json" -H "Authorization: Bearer $LOGINTOKEN" --data-binary '{"type":"token","description":"automation"}' --insecure`
-#    APITOKEN=`echo $APIRESPONSE | jq -r .token`
-#
-#    # Set `server-url` configuration option
-#    curl -s 'https://127.0.0.1/v3/settings/server-url' -H 'content-type: application/json' -H "Authorization: Bearer $APITOKEN" -X PUT --data-binary '{"name":"server-url","value":"'$RANCHER_SERVER_BASE'"}' --insecure > /dev/null
-#    while ! rancher login $RANCHER_SERVER_BASE --token $APITOKEN --skip-verify > /dev/null 2>&1; do sleep 3; done
-#    rancher catalog add anyvision http://get.a-v.io > /dev/null
-#    rancher catalog delete library > /dev/null
-#    kubectl create secret generic rancher-cli-token --from-file=/root/.rancher/cli2.json --dry-run -o yaml | kubectl apply -f -
-#  ignore_errors: yes
-#  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Rancher | Interact with Rancher API
+  shell: |
+    RANCHER_SERVER_BASE=https://rancher.anv
+
+    # Wait until server is alive
+    while ! curl -k ${RANCHER_SERVER_BASE}/ping; do sleep 3; done
+
+    # Login with default admin credentials get a temporary token with 60s TTL
+    LOGINRESPONSE=`curl -s "${RANCHER_SERVER_BASE}/v3-public/localProviders/local?action=login" -H "content-type: application/json" --data-binary '{"username":"admin","password":"admin","ttl":60000}' --insecure`
+    LOGINTOKEN=`echo $LOGINRESPONSE | jq -r .token`
+
+    # Change admin password
+    #curl -s "${RANCHER_SERVER_BASE}/v3/users?action=changepassword" -H "content-type: application/json" -H "Authorization: Bearer $LOGINTOKEN" --data-binary '{"currentPassword":"admin","newPassword":"thisisyournewpassword"}' --insecure
+
+    # Create and get admin API key
+    APIRESPONSE=`curl -s "${RANCHER_SERVER_BASE}/v3/token" -H "content-type: application/json" -H "Authorization: Bearer $LOGINTOKEN" --data-binary '{"type":"token","description":"automation"}' --insecure`
+    APITOKEN=`echo $APIRESPONSE | jq -r .token`
+
+    # Set `server-url` configuration option
+    curl -s 'https://127.0.0.1/v3/settings/server-url' -H 'content-type: application/json' -H "Authorization: Bearer $APITOKEN" -X PUT --data-binary '{"name":"server-url","value":"'$RANCHER_SERVER_BASE'"}' --insecure > /dev/null
+    while ! rancher login $RANCHER_SERVER_BASE --token $APITOKEN --skip-verify > /dev/null 2>&1; do sleep 3; done
+    rancher catalog add anyvision http://get.a-v.io > /dev/null
+    rancher catalog delete library > /dev/null
+    kubectl create secret generic rancher-cli-token --from-file=/root/.rancher/cli2.json --dry-run -o yaml | kubectl apply -f -
+    kubectl create rolebinding default-admin --clusterrole=admin --serviceaccount=default:default
+    kubectl -n cattle-system patch service rancher --patch '{"spec": {"ports": [{"name": "https","port": 443,"protocol": "TCP","targetPort": 443}]}}'
+  ignore_errors: yes
+  when: inventory_hostname == groups['kube-master'][0]
 

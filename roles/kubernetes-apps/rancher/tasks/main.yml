@@ -16,15 +16,15 @@
 
 - name: Rancher | Install helm chart
   shell: "helm upgrade --install rancher {{ kube_config_dir }}/addons/rancher --namespace cattle-system --set hostname='rancher.anv' --wait --timeout 90"
-  ignore_errors: yes
+#  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
 - name: Argo | Install Argo
   shell: |
     helm repo add argo https://argoproj.github.io/argo-helm
-    helm upgrade --install argo argo/argo --namespace=kube-system \
+    helm upgrade --install argo argo/argo --namespace=kube-system --wait --timeout 90\
     --set ui.ingress.enabled=true,ui.ingress.hosts[0]=argo.anv,ui.ingress.annotation."kubernetes\.io/ingress\.class"=nginx,images.pullPolicy=IfNotPresent,images.tag=v2.3.0
-  ignore_errors: yes
+#  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
 

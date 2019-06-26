@@ -14,6 +14,15 @@
     dest: "{{ kube_config_dir }}/addons/rancher/"
   when: inventory_hostname == groups['kube-master'][0]
 
+- name: Cert-manager | Install Cert manager
+  shell: |
+    kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.7/deploy/manifests/00-crds.yaml
+    kubectl create namespace cert-manager
+    kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
+    helm upgrade --install cert-manager stable/cert-manager --namespace cert-manager --version v0.6.7
+  ignore_errors: yes
+  when: inventory_hostname == groups['kube-master'][0]
+
 - name: Rancher | Install helm chart
   shell: "helm upgrade --install rancher {{ kube_config_dir }}/addons/rancher --namespace cattle-system --set hostname='rancher.anv' --wait --timeout 90"
 #  ignore_errors: yes
@@ -51,16 +60,6 @@
     dest: /etc/hosts
     line: "127.0.0.1 rancher.anv argo.anv"
     state: present
-  when: inventory_hostname == groups['kube-master'][0]
-
-
-- name: Cert-manager | Install Cert manager
-  shell: |
-    kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.7/deploy/manifests/00-crds.yaml
-    kubectl create namespace cert-manager
-    kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
-    helm upgrade --install cert-manager stable/cert-manager --namespace cert-manager --version v0.6.7
-  ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
 

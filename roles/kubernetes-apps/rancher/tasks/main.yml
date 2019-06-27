@@ -19,7 +19,12 @@
     kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.7/deploy/manifests/00-crds.yaml
     kubectl create namespace cert-manager
     kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
-    helm upgrade --install cert-manager stable/cert-manager --namespace cert-manager --version v0.6.7
+    helm upgrade --install cert-manager stable/cert-manager --namespace cert-manager --version v0.6.7 --wait --timeout 90
+#  ignore_errors: yes
+  when: inventory_hostname == groups['kube-master'][0]
+
+- name: Rancher | Delete chart rancher if exists
+  shell: "helm del --purge rancher"
   ignore_errors: yes
   when: inventory_hostname == groups['kube-master'][0]
 
